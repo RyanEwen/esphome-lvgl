@@ -1,0 +1,52 @@
+# SDL display and touchscreen for testing
+# required vars:
+# - sdl_width
+# - sdl_height
+
+esphome:
+  min_version: 2024.8.0 # First version with LVGL and SDL
+
+host:
+  mac_address: "06:35:69:ab:f6:79"
+
+output:
+  - platform: template
+    id: fake_backlight_output
+    type: float
+    write_action:
+      - lambda: |-
+          ESP_LOGD("fake_backlight", "Fake brightness level: %.2f", state);    
+
+light:
+  - id: backlight
+    platform: monochromatic
+    output: fake_backlight_output
+    name: Display Backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 1s
+    gamma_correct: 2.8
+  
+display:
+  - platform: sdl
+    update_interval: never
+    auto_clear_enabled: false
+    dimensions:
+      width: $sdl_width
+      height: $sdl_height
+
+touchscreen:  
+  platform: sdl
+  transform:
+    mirror_x: false
+    mirror_y: false
+  on_touch:
+    - logger.log:
+          format: Touch at (%d, %d)
+          args: [touch.x, touch.y]
+    - lambda: |-
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x,
+              touch.y,
+              touch.x_raw,
+              touch.y_raw
+              );   
