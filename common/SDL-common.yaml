@@ -1,0 +1,12 @@
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+logger:
+  level: INFO
+
+api:
+
+binary_sensor:
+  - platform: status
+    name: Status

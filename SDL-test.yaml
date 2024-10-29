@@ -1,0 +1,12 @@
+substitutions:
+  device_name: sdl-test
+  friendly_name: SDL Test 800x480
+  home_page: lighting_1
+  
+  sdl_width: "800"
+  sdl_height: "480"
+
+packages:
+  common: !include common/SDL-common.yaml
+  device: !include devices/SDL-lvgl.yaml
+  layout: !include layouts/800x480.yaml
