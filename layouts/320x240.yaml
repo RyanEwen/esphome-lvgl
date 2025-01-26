@@ -86,6 +86,8 @@ lvgl:
                     vars:
                       uid: bedroom_light_1
                       entity_id: light.bedroom_light_1
+                      icon_on: "\U000F1253"
+                      icon_off: "\U000F1254"
                       text: Ceiling
                       <<: *button_widget_vars
 
@@ -111,6 +113,8 @@ lvgl:
                     vars:
                       uid: bedroom_light_3
                       entity_id: light.bedroom_light_3
+                      icon_on: "\U000F1253"
+                      icon_off: "\U000F1254"
                       text: Rachel
                       <<: *button_widget_vars
 
@@ -128,6 +132,8 @@ lvgl:
                     vars:
                       uid: bedroom_light_2
                       entity_id: light.bedroom_light_2
+                      icon_on: "\U000F1253"
+                      icon_off: "\U000F1254"
                       text: Ryan
                       <<: *button_widget_vars
 
@@ -238,6 +244,8 @@ lvgl:
                     vars:
                       uid: main_floor_lights
                       entity_id: light.main_floor_lights
+                      icon_on: "\U000F1253"
+                      icon_off: "\U000F1254"
                       text: Main Floor
                       <<: *wide_button_widget_vars
 
@@ -247,6 +255,8 @@ lvgl:
                     vars:
                       uid: all_living_room_lights
                       entity_id: light.all_living_room_lights
+                      icon_on: "\U000F18DD"
+                      icon_off: "\U000F18DE"
                       text: Living Room
                       <<: *button_widget_vars
 
@@ -256,6 +266,8 @@ lvgl:
                     vars:
                       uid: kitchen_light
                       entity_id: light.kitchen_light
+                      icon_on: "\U000F0336"
+                      icon_off: "\U000F17C7"
                       text: Kitchen
                       <<: *button_widget_vars
 
@@ -265,6 +277,8 @@ lvgl:
                     vars:
                       uid: rachels_office_light
                       entity_id: light.rachels_office_light
+                      icon_on: "\U000F1B20"
+                      icon_off: "\U000F095F"
                       text: Office
                       <<: *button_widget_vars
 
@@ -274,6 +288,8 @@ lvgl:
                     vars:
                       uid: upstairs_hallway_light_p1
                       entity_id: light.upstairs_hallway_light
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Hallway
                       <<: *button_widget_vars
 
@@ -295,6 +311,8 @@ lvgl:
                     vars:
                       uid: second_floor_lights
                       entity_id: light.second_floor_lights
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Second Floor
                       <<: *wide_button_widget_vars
 
@@ -304,6 +322,8 @@ lvgl:
                     vars:
                       uid: all_bedroom_lights
                       entity_id: light.all_bedroom_lights
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Bedroom
                       <<: *button_widget_vars
 
@@ -313,6 +333,8 @@ lvgl:
                     vars:
                       uid: railyns_light
                       entity_id: light.railyns_light
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Railyn
                       <<: *button_widget_vars
 
@@ -322,6 +344,8 @@ lvgl:
                     vars:
                       uid: all_ryan_s_office_lights
                       entity_id: light.all_ryan_s_office_lights
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Office
                       <<: *button_widget_vars
 
@@ -331,6 +355,8 @@ lvgl:
                     vars:
                       uid: upstairs_hallway_light_p2
                       entity_id: light.upstairs_hallway_light
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Hallway
                       <<: *button_widget_vars
 
@@ -352,6 +378,8 @@ lvgl:
                     vars:
                       uid: all_outside_lights
                       entity_id: light.all_outside_lights
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Outside Lights
                       <<: *wide_button_widget_vars
 
@@ -361,6 +389,8 @@ lvgl:
                     vars:
                       uid: outside_light_1
                       entity_id: light.outside_light_1
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Door Lights
                       <<: *button_widget_vars
 
@@ -370,6 +400,8 @@ lvgl:
                     vars:
                       uid: outside_light_2
                       entity_id: light.outside_light_2
+                      icon_on: "\U000F06E8"
+                      icon_off: "\U000F0336"
                       text: Deck Lights
                       <<: *button_widget_vars
 

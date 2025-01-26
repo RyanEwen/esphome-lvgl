@@ -3,6 +3,8 @@
 # - entity_id
 # - width
 # - height
+# - icon_on
+# - icon_off
 # - text
 
 # button:
@@ -13,8 +15,8 @@
       entity_id: ${entity_id}
       width: ${width}
       height: ${height}
-      icon_on: "\U000F1253"
-      icon_off: "\U000F1254"
+      icon_on: ${icon_on}
+      icon_off: ${icon_off}
       text: ${text}
   on_short_click:
     - homeassistant.action:
