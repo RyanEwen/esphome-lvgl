@@ -1,0 +1,114 @@
+text_sensor:
+  - id: ${uid}_print_status
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_current_print_state
+    filters:
+      - lambda: |-
+          x[0] = toupper(x[0]);
+          return x;
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_print_status_lbl
+          text: !lambda return x;
+      - if:
+          condition:
+            - text_sensor.state:
+                id: ${uid}_print_status
+                state: 'error'
+          then:
+            - lvgl.bar.update:
+                id: ${uid}_print_progress_bar
+                indicator:
+                  bg_color: 0xFF0000
+          else:
+            - if:
+                condition:
+                  - text_sensor.state:
+                      id: ${uid}_print_status
+                      state: 'paused'
+                then:
+                  - lvgl.bar.update:
+                      id: ${uid}_print_progress_bar
+                      indicator:
+                        bg_color: 0xFFAF00
+                else:
+                  - if:
+                      condition:
+                        - text_sensor.state:
+                            id: ${uid}_print_status
+                            state: 'complete'
+                      then:
+                        - lvgl.bar.update:
+                            id: ${uid}_print_progress_bar
+                            indicator:
+                              bg_color: 0x00FF86
+                      else:
+                        - lvgl.bar.update:
+                            id: ${uid}_print_progress_bar
+                            indicator:
+                              bg_color: 0x00B6FF
+
+  - id: ${uid}_remaining_time
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_print_time_left
+    on_value:
+      - if:
+          condition:
+            - text_sensor.state:
+                id: ${uid}_print_status
+                state: 'printing'
+          then:
+            - lvgl.label.update:
+                id: ${uid}_remaining_time_lbl
+                text: !lambda |-
+                  int number = std::stoi(x);
+                  int hours = number / 60;
+                  int mins = number % 60;
+                  return std::to_string(hours) + " hr " + std::to_string(mins) + " min";
+          else:
+            - lvgl.label.update:
+                id: ${uid}_remaining_time_lbl
+                text: " "
+
+  - id: ${uid}_end_time
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_print_eta
+    on_value:
+      - if:
+          condition:
+            text_sensor.state:
+              id: ${uid}_print_status
+              state: 'printing'
+          then:
+            - lvgl.label.update:
+                id: ${uid}_end_time_lbl
+                text: !lambda |-
+                  int hour = std::stoi(x.substr(11, 2));
+                  std::string am_pm = "AM";
+
+                  if (hour >= 12) {
+                    am_pm = "PM";
+
+                    if (hour > 12) {
+                      hour -= 12;
+                    }
+                  } else if (hour == 0) {
+                    hour = 12;
+                  }
+
+                  std::string time_12hr = std::to_string(hour) + x.substr(13, 3) + " " + am_pm;
+
+                  return time_12hr;
+          else:
+            - lvgl.label.update:
+                id: ${uid}_end_time_lbl
+                text: " "
+
+sensor:
+  - id: ${uid}_print_progress
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_progress
+    on_value:
+      - lvgl.bar.update:
+          id: ${uid}_print_progress_bar
+          value: !lambda return x;
