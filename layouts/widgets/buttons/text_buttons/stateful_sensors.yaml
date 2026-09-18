@@ -6,7 +6,7 @@ binary_sensor:
   - id: ${uid}_widget_sensor
     platform: homeassistant
     entity_id: ${entity_id}
-    publish_initial_state: true
+    trigger_on_initial_state: true
     on_state:
       - if:
           condition:

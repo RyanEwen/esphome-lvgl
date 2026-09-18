@@ -2,7 +2,7 @@ binary_sensor:
   - id: living_room_tv
     platform: homeassistant
     entity_id: media_player.living_room_tv
-    publish_initial_state: true
+    trigger_on_initial_state: true
     on_state:
       - if:
           condition:
