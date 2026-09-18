@@ -1,0 +1,134 @@
+# One AMS unit as a row: label, humidity and 4 tray pills.
+#
+# required vars:
+# - uid
+# - ams_id
+# - label
+# - ams_label_width
+# - ams_hum_width
+# - ams_strip_width
+# - ams_tray_width
+# - ams_tray_height
+# - ams_tray_padding
+
+# - obj:
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: END
+    flex_align_cross: CENTER
+    pad_column: ${ams_tray_padding}
+  width: 100%
+  height: SIZE_CONTENT
+  pad_all: 0
+  border_width: 0
+  bg_opa: 0
+  widgets:
+    - obj: # unit label, right justified
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: END
+          flex_align_cross: CENTER
+        width: ${ams_label_width}
+        height: SIZE_CONTENT
+        pad_all: 0
+        border_width: 0
+        bg_opa: 0
+        widgets:
+          - label:
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: ${label}
+              text_color: 0x9AA0AE
+    - obj: # humidity value + glyph, right justified and tight together
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: END
+          flex_align_cross: CENTER
+          pad_column: 2
+        width: ${ams_hum_width}
+        height: SIZE_CONTENT
+        pad_all: 0
+        border_width: 0
+        bg_opa: 0
+        widgets:
+          - label:
+              id: ${uid}_ams_${ams_id}_humidity_lbl
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: ""
+              text_color: 0x9AA0AE
+          - label: # recoloured amber by ams_row_drying.sensors.yaml
+              id: ${uid}_ams_${ams_id}_humidity_icon
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: "\U000F058E"
+              text_font: mdi_sm
+              text_color: 0x9AA0AE
+    - obj: # fixed-width pill strip -- keeps columns aligned across rows
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: START
+          flex_align_cross: CENTER
+          pad_column: ${ams_tray_padding}
+        width: ${ams_strip_width}
+        height: SIZE_CONTENT
+        pad_all: 0
+        border_width: 0
+        bg_opa: 0
+        widgets:
+        - obj:
+            id: ${uid}_ams_${ams_id}_tray_1_obj
+            width: ${ams_tray_width}
+            height: ${ams_tray_height}
+            radius: ${ams_tray_height}
+            border_width: 0
+            scrollable: false
+            text_color: 0xCCCCCC
+            widgets:
+              - label:
+                  id: ${uid}_ams_${ams_id}_tray_1_remaining_lbl
+                  align: CENTER
+                  text: "..."
+        - obj:
+            id: ${uid}_ams_${ams_id}_tray_2_obj
+            width: ${ams_tray_width}
+            height: ${ams_tray_height}
+            radius: ${ams_tray_height}
+            border_width: 0
+            scrollable: false
+            text_color: 0xCCCCCC
+            widgets:
+              - label:
+                  id: ${uid}_ams_${ams_id}_tray_2_remaining_lbl
+                  align: CENTER
+                  text: "..."
+        - obj:
+            id: ${uid}_ams_${ams_id}_tray_3_obj
+            width: ${ams_tray_width}
+            height: ${ams_tray_height}
+            radius: ${ams_tray_height}
+            border_width: 0
+            scrollable: false
+            text_color: 0xCCCCCC
+            widgets:
+              - label:
+                  id: ${uid}_ams_${ams_id}_tray_3_remaining_lbl
+                  align: CENTER
+                  text: "..."
+        - obj:
+            id: ${uid}_ams_${ams_id}_tray_4_obj
+            width: ${ams_tray_width}
+            height: ${ams_tray_height}
+            radius: ${ams_tray_height}
+            border_width: 0
+            scrollable: false
+            text_color: 0xCCCCCC
+            widgets:
+              - label:
+                  id: ${uid}_ams_${ams_id}_tray_4_remaining_lbl
+                  align: CENTER
+                  text: "..."

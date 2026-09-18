@@ -1,0 +1,29 @@
+# Status / remaining time / end time row of a printer tile.
+#
+# required vars:
+# - uid
+
+# - obj:
+  width: 100%
+  height: SIZE_CONTENT
+  pad_all: 0
+  border_width: 0
+  bg_opa: 0
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: SPACE_BETWEEN
+  widgets:
+    - label:
+        hidden: true
+        width: SIZE_CONTENT
+        id: ${uid}_print_status_lbl
+        text: " "
+    - label:
+        width: SIZE_CONTENT
+        id: ${uid}_remaining_time_lbl
+        text: " "
+    - label:
+        width: SIZE_CONTENT
+        id: ${uid}_end_time_lbl
+        text: " "

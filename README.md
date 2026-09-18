@@ -10,6 +10,9 @@
 * Elecrow CrowPanel `DIS05035H` (v2.2) 3.5" 320x480 portrait, with resistive touch and USB-C. [Manufacturer's Link](https://www.elecrow.com/esp32-display-3-5-inch-hmi-display-spi-tft-lcd-touch-screen.html).
 
 ## Changelog
+### 2026-09-18
+* [Breaking change] The printer tile is now composed in the layout from one AMS row include per AMS unit rather than from a single `widgets/printers/widget.yaml`, so a printer can carry any combination of AMS and AMS HT units. `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced by `ams_row*.yaml`, `tile_status.yaml`, `tile_progress.yaml` and their sensor counterparts. A page that includes the old files needs recomposing; the `printers` page in each layout shows the shape.
+* Show per-unit AMS humidity, amber while that unit is drying.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.

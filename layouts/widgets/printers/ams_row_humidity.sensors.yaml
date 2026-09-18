@@ -1,0 +1,19 @@
+# Humidity readout for one AMS unit.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+
+sensor:
+  - id: ${uid}_ams_${ams_id}_humidity
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_humidity
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_ams_${ams_id}_humidity_lbl
+          text: !lambda |- # clamped to 99 so the column fits two digits
+            int pct = (int) lroundf(x);
+            if (pct > 99) pct = 99;
+            if (pct < 0) pct = 0;
+            return std::to_string(pct);

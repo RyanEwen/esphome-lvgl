@@ -1,0 +1,35 @@
+# Tray sensor for a single-tray AMS unit.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+
+text_sensor:
+
+  - id: ${uid}_ams_${ams_id}_tray_1_remain
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_tray_1
+    attribute: remain
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_ams_${ams_id}_tray_1_remaining_lbl
+          text: !lambda |-
+            if (x == "-1") {
+              return std::string("--");
+            }
+            return x + "%";
+
+  - id: ${uid}_ams_${ams_id}_tray_1_color
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_tray_1
+    attribute: color
+    on_value:
+      - lvgl.widget.update:
+          id: ${uid}_ams_${ams_id}_tray_1_obj
+          bg_color: !lambda |-
+            std::string hexString = x.substr(1);
+            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
+            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
+            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
+            return lv_color_make(intR, intG, intB);

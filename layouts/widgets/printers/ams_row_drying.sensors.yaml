@@ -1,0 +1,24 @@
+# Drying indicator for one AMS unit; recolours its humidity glyph.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+
+binary_sensor:
+  - id: ${uid}_ams_${ams_id}_drying
+    platform: homeassistant
+    entity_id: binary_sensor.${entity_id_prefix}_ams_${ams_id}_drying
+    trigger_on_initial_state: true
+    on_state:
+      - if:
+          condition:
+            - binary_sensor.is_on: ${uid}_ams_${ams_id}_drying
+          then:
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_humidity_icon
+                text_color: 0xFFAF00
+          else:
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_humidity_icon
+                text_color: 0x9AA0AE
