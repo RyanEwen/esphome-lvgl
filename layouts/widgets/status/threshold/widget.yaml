@@ -1,0 +1,14 @@
+# The same tile as status/binary, driven by a numeric sensor crossing a
+# threshold instead of by an on/off entity. Pair with sensors.yaml.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+# - icon_on
+# - icon_off
+# - color_on
+
+# obj:
+  <<: !include ../binary/widget.yaml

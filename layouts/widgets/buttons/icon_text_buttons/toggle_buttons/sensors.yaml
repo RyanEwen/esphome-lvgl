@@ -1,0 +1,5 @@
+# required vars:
+# - uid
+# - entity_id
+
+<<: !include ../stateful_sensors.yaml

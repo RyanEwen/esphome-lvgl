@@ -1,0 +1,39 @@
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+# - icon_on
+# - icon_off
+# - color_on
+
+# obj: # an obj, not a button — the theme renders it darker, so it reads as not pressable
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  border_width: 0
+  radius: 20
+  widgets:
+    - label:
+        id: ${uid}_widget_unknown
+        text: "\U000F01D8"
+        text_font: mdi_md
+        align: TOP_LEFT
+    - label:
+        id: ${uid}_widget_on
+        text: ${icon_on}
+        text_font: mdi_md
+        text_color: ${color_on}
+        align: TOP_LEFT
+        hidden: true
+    - label:
+        id: ${uid}_widget_off
+        text: ${icon_off}
+        text_font: mdi_md
+        text_color: 0x9AA0AE
+        align: TOP_LEFT
+        hidden: true
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        align: BOTTOM_LEFT
