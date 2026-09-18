@@ -1,5 +1,5 @@
 esphome:
-  min_version: 2024.11.0
+  min_version: 2026.9.0
 
 logger:
   level: INFO
@@ -13,8 +13,11 @@ web_server:
 
 ota:
   - platform: esphome
+    encryption: # inherits the api key
 
 api:
+  encryption:
+    key: !secret api_encryption_key
   on_client_connected:
     - globals.set:
         id: homeassistant_ip

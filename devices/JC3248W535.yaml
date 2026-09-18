@@ -1,9 +1,6 @@
 esphome:
   platformio_options:
     upload_speed: 921600
-    board_build.flash_mode: dio
-    board_build.f_flash: 80000000L
-    board_build.f_cpu: 240000000L
 
 esp32:
   board: esp32-s3-devkitc-1

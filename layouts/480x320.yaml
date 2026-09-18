@@ -71,6 +71,7 @@ lvgl:
     - id: splash
       skip: true
       on_load:
+        - delay: 250ms # page.show is dropped if called during this on_load
         - script.execute: go_home
 
     - id: bedroom
