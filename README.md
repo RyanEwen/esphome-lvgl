@@ -172,7 +172,7 @@ These look better in real life, I promise! I took these photos in low-light and 
 
 3.5" 320x480 portrait (Guition JC3248W535)  
 ![Lighting Page](media/guition_3.5_lighting.jpg "Lighting Page")
-![Printers Page](media/guition_3.5_printers.jpg "Printers Page")  
+![Printers Page](media/guition_3.5_printers_ams.jpg "Printers Page")  
 
 3.5" 320x480 portrait (Elecrow DIS05035H)  
 ![Lighting Page](media/elecrow_3.5_lighting.jpg "Lighting Page")
