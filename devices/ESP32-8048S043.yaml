@@ -1,9 +1,5 @@
 esphome:
-  platformio_options:
-    build_flags: "-DBOARD_HAS_PSRAM"
-    board_build.esp-idf.memory_type: qio_opi
-    board_build.flash_mode: dio
-    board_upload.maximum_ram_size: 524288
+  build_flags: "-DBOARD_HAS_PSRAM"
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -50,7 +46,6 @@ display:
     dimensions:
       width: 800
       height: 480
-    rotation: 90
     color_order: RGB
     de_pin: 40
     hsync_pin: 39
@@ -88,3 +83,6 @@ touchscreen:
     #           touch.x_raw,
     #           touch.y_raw
     #         );
+
+lvgl:
+  rotation: 90 # not display.rotation, which LVGL rejects

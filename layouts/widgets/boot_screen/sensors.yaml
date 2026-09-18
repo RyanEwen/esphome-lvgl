@@ -3,7 +3,8 @@ api:
     - lvgl.widget.hide: boot_screen
 
 image:
-  - file: https://avatars.githubusercontent.com/u/45919759
+  - platform: file
+    file: https://avatars.githubusercontent.com/u/45919759
     id: boot_logo
     resize: 200x200
     type: RGB565
