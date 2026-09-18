@@ -65,9 +65,9 @@ text_sensor:
             - lvgl.label.update:
                 id: ${uid}_remaining_time_lbl
                 text: !lambda |-
-                  int number = std::stoi(x);
-                  int hours = number / 60;
-                  int mins = number % 60;
+                  int total_mins = (int) lroundf(atof(x.c_str()) * 60.0f);
+                  int hours = total_mins / 60;
+                  int mins = total_mins % 60;
                   return std::to_string(hours) + " hr " + std::to_string(mins) + " min";
           else:
             - lvgl.label.update:
@@ -75,9 +75,7 @@ text_sensor:
                 text: " "
       - if:
           condition:
-            - text_sensor.state:
-                id: ${uid}_remaining_time
-                state: '0'
+            - lambda: return atof(id(${uid}_remaining_time).state.c_str()) == 0.0f;
           then:
             - lvgl.label.update:
                 id: ${uid}_remaining_time_lbl
@@ -96,22 +94,19 @@ text_sensor:
             - lvgl.label.update:
                 id: ${uid}_end_time_lbl
                 text: !lambda |-
-                  int hour = std::stoi(x.substr(11, 2));
-                  std::string am_pm = "AM";
-
-                  if (hour >= 12) {
-                    am_pm = "PM";
-
-                    if (hour > 12) {
-                      hour -= 12;
-                    }
-                  } else if (hour == 0) {
-                    hour = 12;
+                  auto now = id(ha_time).now();
+                  if (!now.is_valid()) {
+                    return std::string(" ");
                   }
-
-                  std::string time_12hr = std::to_string(hour) + x.substr(13, 3) + " " + am_pm;
-
-                  return time_12hr;
+                  float hours = atof(id(${uid}_remaining_time).state.c_str());
+                  auto end = ESPTime::from_epoch_local(now.timestamp + (time_t) (hours * 3600.0f));
+                  char buf[16];
+                  end.strftime(buf, sizeof(buf), "%I:%M %p");
+                  std::string formatted = buf;
+                  if (!formatted.empty() && formatted[0] == '0') {
+                    formatted.erase(0, 1);
+                  }
+                  return formatted;
           else:
             - lvgl.label.update:
                 id: ${uid}_end_time_lbl
@@ -119,7 +114,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_1_remain
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_1
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_1
     attribute: remain
     on_value:
       - lvgl.label.update:
@@ -128,7 +123,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_1_color
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_1
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_1
     attribute: color
     on_value:
       - lvgl.widget.update:
@@ -142,7 +137,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_2_remain
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_2
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_2
     attribute: remain
     on_value:
       - lvgl.label.update:
@@ -151,7 +146,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_2_color
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_2
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_2
     attribute: color
     on_value:
       - lvgl.widget.update:
@@ -165,7 +160,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_3_remain
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_3
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_3
     attribute: remain
     on_value:
       - lvgl.label.update:
@@ -174,7 +169,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_3_color
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_3
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_3
     attribute: color
     on_value:
       - lvgl.widget.update:
@@ -188,7 +183,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_4_remain
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_4
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_4
     attribute: remain
     on_value:
       - lvgl.label.update:
@@ -197,7 +192,7 @@ text_sensor:
 
   - id: ${uid}_ams_tray_4_color
     platform: homeassistant
-    entity_id: sensor.${entity_id_prefix}_ams_tray_4
+    entity_id: sensor.${entity_id_prefix}_ams_1_tray_4
     attribute: color
     on_value:
       - lvgl.widget.update:
