@@ -33,3 +33,20 @@ text_sensor:
             int intG = stoi(hexString.substr(2, 2), nullptr, 16);
             int intB = stoi(hexString.substr(4, 2), nullptr, 16);
             return lv_color_make(intR, intG, intB);
+          # the percentage sits inside the pill, so its colour has to follow the
+          # filament: light grey vanishes on white PLA, dark ink on black.
+          # Relative luminance with the sRGB gamma curve, not a weighted average
+          # of the raw bytes -- the cheap version reads Bambu's green as dark and
+          # puts light text on it at 1.8:1, where dark ink gives 6.4:1. 0.179 is
+          # where the two contrast ratios cross over.
+          text_color: !lambda |-
+            std::string hexString = x.substr(1);
+            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
+            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
+            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
+            auto lin = [](int v) {
+              float c = v / 255.0f;
+              return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
+            };
+            float luminance = 0.2126f * lin(intR) + 0.7152f * lin(intG) + 0.0722f * lin(intB);
+            return luminance > 0.179f ? lv_color_hex(0x111111) : lv_color_hex(0xCCCCCC);
