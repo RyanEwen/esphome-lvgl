@@ -24,11 +24,11 @@
   border_width: 0
   bg_opa: 0
   widgets:
-    - obj: # unit label, right justified
+    - obj: # unit title, left justified
         layout:
           type: FLEX
           flex_flow: ROW
-          flex_align_main: END
+          flex_align_main: START
           flex_align_cross: CENTER
         width: ${ams_label_width}
         height: SIZE_CONTENT
@@ -54,13 +54,21 @@
         border_width: 0
         bg_opa: 0
         widgets:
+          - label: # written only by ams_row_drying.sensors.yaml, so a unit with no
+                   # drying hardware omits that package and this stays empty
+              id: ${uid}_ams_${ams_id}_heater_icon
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: ""
+              text_font: mdi_sm
+              text_color: 0x9AA0AE
           - label:
               id: ${uid}_ams_${ams_id}_humidity_lbl
               width: SIZE_CONTENT
               height: SIZE_CONTENT
               text: ""
               text_color: 0x9AA0AE
-          - label: # recoloured amber by ams_row_drying.sensors.yaml
+          - label:
               id: ${uid}_ams_${ams_id}_humidity_icon
               width: SIZE_CONTENT
               height: SIZE_CONTENT

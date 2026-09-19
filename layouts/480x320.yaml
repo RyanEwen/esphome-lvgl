@@ -59,7 +59,7 @@ font: !include
 
   - &ams_row_vars
     ams_label_width: 24
-    ams_hum_width: 40
+    ams_hum_width: 62 # heater 20 + 2 + '99' 18 + 2 + glyph 20
     ams_strip_width: 175
     ams_tray_width: 40
     ams_tray_height: 20
