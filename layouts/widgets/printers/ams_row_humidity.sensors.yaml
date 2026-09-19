@@ -29,6 +29,11 @@ sensor:
                   if (pct < 0) pct = 0;
                   return std::to_string(pct);
           else:
+            # NAN means the entity went unavailable or was removed -- the unit
+            # is not there. Hiding is the honest answer and it is the only
+            # un-reveal path: without it a unit moved to another printer leaves
+            # a row of frozen values behind until the panel reboots.
+            - lvgl.widget.hide: ${uid}_ams_${ams_id}_row
             - lvgl.label.update:
                 id: ${uid}_ams_${ams_id}_humidity_lbl
                 text: "--"
