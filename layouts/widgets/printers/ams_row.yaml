@@ -6,6 +6,7 @@
 # - label
 # - ams_label_width
 # - ams_hum_width
+# - ams_hum_value_width
 # - ams_strip_width
 # - ams_tray_width
 # - ams_tray_height
@@ -63,12 +64,25 @@
               text: ""
               text_font: mdi_sm
               text_color: 0x9AA0AE
-          - label:
-              id: ${uid}_ams_${ams_id}_humidity_lbl
-              width: SIZE_CONTENT
+          - obj: # fixed width, or a single-digit humidity drags the heater icon
+                 # sideways and the icons stop lining up down the rows
+              width: ${ams_hum_value_width}
               height: SIZE_CONTENT
-              text: ""
-              text_color: 0x9AA0AE
+              pad_all: 0
+              border_width: 0
+              bg_opa: 0
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: END
+                flex_align_cross: CENTER
+              widgets:
+                - label:
+                    id: ${uid}_ams_${ams_id}_humidity_lbl
+                    width: SIZE_CONTENT
+                    height: SIZE_CONTENT
+                    text: ""
+                    text_color: 0x9AA0AE
           - label:
               id: ${uid}_ams_${ams_id}_humidity_icon
               width: SIZE_CONTENT
