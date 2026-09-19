@@ -1,0 +1,28 @@
+# A plain on/off tile for any domain that has a toggle action -- switch, fan,
+# or a light with no brightness of its own. Pair with sensors.yaml.
+#
+# required vars:
+# - uid
+# - entity_id
+# - domain # switch, fan, light, ...
+# - width
+# - height
+# - text
+# - icon_on
+# - icon_off
+
+# button:
+  <<: !include
+    file: ../stateful.yaml
+    vars:
+      uid: ${uid}
+      width: ${width}
+      height: ${height}
+      icon_on: ${icon_on}
+      icon_off: ${icon_off}
+      text: ${text}
+  on_short_click:
+    - homeassistant.action:
+        action: ${domain}.toggle
+        data:
+          entity_id: ${entity_id}

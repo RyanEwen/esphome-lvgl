@@ -1,0 +1,42 @@
+# Drives the tile from what the appliance actually draws, not from whether its
+# plug is live -- a smart plug reads `on` while the thing behind it idles.
+#
+# `threshold` is exclusive: above it is on, at or below it is off. Match it to
+# whatever value the Home Assistant automation treats as finished, so the tile
+# goes dark at the same moment the notification fires.
+#
+# An unavailable entity publishes NAN, which is neither above nor below the
+# threshold, so it shows the unknown glyph rather than reading as finished.
+#
+# required vars:
+# - uid
+# - entity_id
+# - threshold
+
+sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - if:
+          condition:
+            lambda: return std::isnan(x);
+          then:
+            - lvgl.widget.hide:
+                - ${uid}_widget_on
+                - ${uid}_widget_off
+            - lvgl.widget.show: ${uid}_widget_unknown
+          else:
+            - if:
+                condition:
+                  lambda: return x > ${threshold};
+                then:
+                  - lvgl.widget.hide:
+                      - ${uid}_widget_unknown
+                      - ${uid}_widget_off
+                  - lvgl.widget.show: ${uid}_widget_on
+                else:
+                  - lvgl.widget.hide:
+                      - ${uid}_widget_unknown
+                      - ${uid}_widget_on
+                  - lvgl.widget.show: ${uid}_widget_off

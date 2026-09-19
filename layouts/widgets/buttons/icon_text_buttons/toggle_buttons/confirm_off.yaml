@@ -1,0 +1,44 @@
+# Same tile as widget.yaml, but turning the entity OFF asks first -- for a plug
+# that carries a printer, where a stray touch would cut power mid-print.
+# Turning it back ON is immediate; only the destructive direction confirms.
+#
+# The dialog is the shared `confirm_box` msgbox in the layout, so the entity to
+# act on is stashed in the `confirm_entity` global rather than baked into the
+# msgbox. Pair with sensors.yaml.
+#
+# required vars:
+# - uid
+# - entity_id
+# - domain # switch, fan, light, ...
+# - width
+# - height
+# - text
+# - icon_on
+# - icon_off
+# - confirm_text
+
+# button:
+  <<: !include
+    file: ../stateful.yaml
+    vars:
+      uid: ${uid}
+      width: ${width}
+      height: ${height}
+      icon_on: ${icon_on}
+      icon_off: ${icon_off}
+      text: ${text}
+  on_short_click:
+    - if:
+        condition:
+          - binary_sensor.is_on: ${uid}_widget_sensor
+        then:
+          - lambda: id(confirm_entity) = "${entity_id}";
+          - lvgl.label.update:
+              id: confirm_body
+              text: ${confirm_text}
+          - lvgl.widget.show: confirm_box
+        else:
+          - homeassistant.action:
+              action: ${domain}.turn_on
+              data:
+                entity_id: ${entity_id}
