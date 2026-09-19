@@ -10,6 +10,10 @@ sensor:
     platform: homeassistant
     entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_humidity
     on_value:
+      # every AMS reports humidity, so this doubles as "the unit is there".
+      # A layout that starts its rows hidden gets them revealed as the units
+      # report; where rows are always visible this is a no-op.
+      - lvgl.widget.show: ${uid}_ams_${ams_id}_row
       - lvgl.label.update:
           id: ${uid}_ams_${ams_id}_humidity_lbl
           text: !lambda |- # clamped to 99 so the column fits two digits

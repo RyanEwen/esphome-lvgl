@@ -12,6 +12,7 @@
 # - ams_tray_padding
 
 # - obj:
+  id: ${uid}_ams_${ams_id}_row
   layout:
     type: FLEX
     flex_flow: ROW
