@@ -17,6 +17,9 @@
       icon_off: "\U000F1254"
       text: ${text}
   on_short_click:
+    # build-time proof that this tile's sensors package was included: without it
+    # a forgotten package leaves the tile on the unknown glyph, silently
+    - lambda: (void) id(${uid}_widget_sensor);
     - homeassistant.action:
         action: light.toggle
         data:

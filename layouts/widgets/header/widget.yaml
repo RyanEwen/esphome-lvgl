@@ -16,8 +16,28 @@ obj: # title bar
           align: LEFT_MID
           x: ${padding} # RESOLUTION-SPECIFIC
           text: " "
-      - label: # clock
-          id: nav_clock
+      - obj: # clock, preceded by a link indicator when Home Assistant is gone
           align: RIGHT_MID
           x: -${padding} # RESOLUTION-SPECIFIC
-          text: " "
+          width: SIZE_CONTENT
+          height: SIZE_CONTENT
+          pad_all: 0
+          border_width: 0
+          bg_opa: 0
+          layout:
+            type: FLEX
+            flex_flow: ROW
+            flex_align_cross: CENTER
+            pad_column: 6
+          widgets:
+            - label: # lan-disconnect, not wifi-off: the panel's own wifi can be fine
+                     # while Home Assistant is unreachable, and every tile on screen
+                     # is only as fresh as that link
+                id: nav_link_lost
+                text: "\U000F0319"
+                text_font: mdi_sm
+                text_color: 0xFF6B60
+                hidden: true
+            - label: # clock
+                id: nav_clock
+                text: " "

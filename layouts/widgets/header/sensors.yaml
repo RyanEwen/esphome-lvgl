@@ -1,3 +1,20 @@
+# common.yaml already declares a status sensor for Home Assistant's benefit, but
+# with no id to hang a trigger on. This one is internal, so it adds no entity --
+# it only drives the header indicator. The platform reports network AND api
+# connectivity, which is what "is anything on this screen still true" depends on.
+binary_sensor:
+  - id: api_link
+    platform: status
+    internal: true
+    on_state:
+      - if:
+          condition:
+            - binary_sensor.is_on: api_link
+          then:
+            - lvgl.widget.hide: nav_link_lost
+          else:
+            - lvgl.widget.show: nav_link_lost
+
 time:
   - id: ha_time
     platform: homeassistant
