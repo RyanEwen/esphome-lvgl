@@ -133,4 +133,7 @@ sensor:
     on_value:
       - lvgl.bar.update:
           id: ${uid}_print_progress_bar
-          value: !lambda return x;
+          # bar value is an int; (int) NAN is undefined and saturates, which
+          # pinned the bar full whenever the sensor went unavailable
+          value: !lambda |-
+            return std::isnan(x) ? 0 : (int) x;

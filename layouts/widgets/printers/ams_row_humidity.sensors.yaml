@@ -10,14 +10,25 @@ sensor:
     platform: homeassistant
     entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_humidity
     on_value:
-      # every AMS reports humidity, so this doubles as "the unit is there".
-      # A layout that starts its rows hidden gets them revealed as the units
-      # report; where rows are always visible this is a no-op.
-      - lvgl.widget.show: ${uid}_ams_${ams_id}_row
-      - lvgl.label.update:
-          id: ${uid}_ams_${ams_id}_humidity_lbl
-          text: !lambda |- # clamped to 99 so the column fits two digits
-            int pct = (int) lroundf(x);
-            if (pct > 99) pct = 99;
-            if (pct < 0) pct = 0;
-            return std::to_string(pct);
+      # every AMS reports humidity, so a real reading doubles as "the unit is
+      # there". An unavailable entity publishes NAN, which must not count as
+      # presence -- and lroundf(NaN) is undefined, so it would have clamped to a
+      # confident-looking 99.
+      - if:
+          condition:
+            lambda: return !std::isnan(x);
+          then:
+            # A layout that starts its rows hidden gets them revealed as the
+            # units report; where rows are always visible this is a no-op.
+            - lvgl.widget.show: ${uid}_ams_${ams_id}_row
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_humidity_lbl
+                text: !lambda |- # clamped to 99 so the column fits two digits
+                  int pct = (int) lroundf(x);
+                  if (pct > 99) pct = 99;
+                  if (pct < 0) pct = 0;
+                  return std::to_string(pct);
+          else:
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_humidity_lbl
+                text: "--"

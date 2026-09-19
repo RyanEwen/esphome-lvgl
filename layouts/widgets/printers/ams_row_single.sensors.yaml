@@ -36,8 +36,9 @@ text_sensor:
             if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
               return lv_color_hex(0x42495A); // the tile's own background
             }
+            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
             char *end = nullptr;
-            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            long rgb = strtol(hex.c_str(), &end, 16);
             if (end == nullptr || *end != '\0') {
               return lv_color_hex(0x42495A);
             }
@@ -52,8 +53,9 @@ text_sensor:
             if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
               return lv_color_hex(0xCCCCCC); // readable on the fallback background
             }
+            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
             char *end = nullptr;
-            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            long rgb = strtol(hex.c_str(), &end, 16);
             if (end == nullptr || *end != '\0') {
               return lv_color_hex(0xCCCCCC);
             }
