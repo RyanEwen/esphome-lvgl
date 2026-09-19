@@ -111,8 +111,7 @@
           flex_flow: ROW
           flex_align_main: SPACE_BETWEEN
         widgets:
-          - label:
-              hidden: true
+          - label: # the word itself, not just the bar colour underneath it
               width: SIZE_CONTENT
               id: ${uid}_print_status_lbl
               text: "..."
