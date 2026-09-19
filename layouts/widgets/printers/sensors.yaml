@@ -129,11 +129,20 @@ text_sensor:
       - lvgl.widget.update:
           id: ${uid}_ams_tray_1_obj
           bg_color: !lambda |-
-            std::string hexString = x.substr(1);
-            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
-            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
-            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
-            return lv_color_make(intR, intG, intB);
+            // Home Assistant sends the literal "unavailable" or "None" when an
+            // entity has no value, and this firmware is built -fno-exceptions,
+            // so std::stoi on either does not throw -- it aborts, which panics
+            // and reboots the display. strtol cannot, and the length and prefix
+            // checks reject anything that is not #RRGGBB or #RRGGBBAA first.
+            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
+              return lv_color_hex(0x42495A); // the tile's own background
+            }
+            char *end = nullptr;
+            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            if (end == nullptr || *end != '\0') {
+              return lv_color_hex(0x42495A);
+            }
+            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 
   - id: ${uid}_ams_tray_2_remain
     platform: homeassistant
@@ -152,11 +161,20 @@ text_sensor:
       - lvgl.widget.update:
           id: ${uid}_ams_tray_2_obj
           bg_color: !lambda |-
-            std::string hexString = x.substr(1);
-            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
-            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
-            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
-            return lv_color_make(intR, intG, intB);
+            // Home Assistant sends the literal "unavailable" or "None" when an
+            // entity has no value, and this firmware is built -fno-exceptions,
+            // so std::stoi on either does not throw -- it aborts, which panics
+            // and reboots the display. strtol cannot, and the length and prefix
+            // checks reject anything that is not #RRGGBB or #RRGGBBAA first.
+            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
+              return lv_color_hex(0x42495A); // the tile's own background
+            }
+            char *end = nullptr;
+            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            if (end == nullptr || *end != '\0') {
+              return lv_color_hex(0x42495A);
+            }
+            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 
   - id: ${uid}_ams_tray_3_remain
     platform: homeassistant
@@ -175,11 +193,20 @@ text_sensor:
       - lvgl.widget.update:
           id: ${uid}_ams_tray_3_obj
           bg_color: !lambda |-
-            std::string hexString = x.substr(1);
-            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
-            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
-            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
-            return lv_color_make(intR, intG, intB);
+            // Home Assistant sends the literal "unavailable" or "None" when an
+            // entity has no value, and this firmware is built -fno-exceptions,
+            // so std::stoi on either does not throw -- it aborts, which panics
+            // and reboots the display. strtol cannot, and the length and prefix
+            // checks reject anything that is not #RRGGBB or #RRGGBBAA first.
+            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
+              return lv_color_hex(0x42495A); // the tile's own background
+            }
+            char *end = nullptr;
+            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            if (end == nullptr || *end != '\0') {
+              return lv_color_hex(0x42495A);
+            }
+            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 
   - id: ${uid}_ams_tray_4_remain
     platform: homeassistant
@@ -198,11 +225,20 @@ text_sensor:
       - lvgl.widget.update:
           id: ${uid}_ams_tray_4_obj
           bg_color: !lambda |-
-            std::string hexString = x.substr(1);
-            int intR = stoi(hexString.substr(0, 2), nullptr, 16);
-            int intG = stoi(hexString.substr(2, 2), nullptr, 16);
-            int intB = stoi(hexString.substr(4, 2), nullptr, 16);
-            return lv_color_make(intR, intG, intB);
+            // Home Assistant sends the literal "unavailable" or "None" when an
+            // entity has no value, and this firmware is built -fno-exceptions,
+            // so std::stoi on either does not throw -- it aborts, which panics
+            // and reboots the display. strtol cannot, and the length and prefix
+            // checks reject anything that is not #RRGGBB or #RRGGBBAA first.
+            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
+              return lv_color_hex(0x42495A); // the tile's own background
+            }
+            char *end = nullptr;
+            long rgb = strtol(x.substr(1, 6).c_str(), &end, 16);
+            if (end == nullptr || *end != '\0') {
+              return lv_color_hex(0x42495A);
+            }
+            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
 sensor:
   - id: ${uid}_print_progress
     platform: homeassistant
