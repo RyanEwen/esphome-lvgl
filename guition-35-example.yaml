@@ -9,3 +9,7 @@ packages:
   common: !include common.yaml
   device: !include devices/JC3248W535.yaml
   layout: !include layouts/480x320.yaml
+  # enable Bluetooth tracker and Proxy
+  # from the components folder
+  ble_tracker: !include components/ble_tracker.yaml
+  ble_proxy: !include components/ble_proxy.yaml
