@@ -27,46 +27,9 @@ text_sensor:
     on_value:
       - lvgl.widget.update:
           id: ${uid}_ams_${ams_id}_tray_1_obj
-          bg_color: !lambda |-
-            // HA sends "unavailable" or "None" when a tray or a whole unit goes
-            // away, and this build has no C++ exceptions, so std::stoi on that
-            // does not throw -- it aborts, which reboots the panel. strtol cannot,
-            // and the length/prefix check rejects anything that is not #RRGGBB
-            // or #RRGGBBAA before it gets there.
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0x42495A); // the tile's own background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0x42495A);
-            }
-            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-          # the percentage sits inside the pill, so its colour has to follow the
-          # filament: light grey vanishes on white PLA, dark ink on black.
-          # Relative luminance with the sRGB gamma curve, not a weighted average
-          # of the raw bytes -- the cheap version reads Bambu's green as dark and
-          # puts light text on it at 1.8:1, where dark ink gives 6.4:1. 0.179 is
-          # where the two contrast ratios cross over.
-          text_color: !lambda |-
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0xCCCCCC); // readable on the fallback background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0xCCCCCC);
-            }
-            int intR = (rgb >> 16) & 0xFF, intG = (rgb >> 8) & 0xFF, intB = rgb & 0xFF;
-            auto lin = [](int v) {
-              float c = v / 255.0f;
-              return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
-            };
-            float luminance = 0.2126f * lin(intR) + 0.7152f * lin(intG) + 0.0722f * lin(intB);
-            return luminance > 0.179f ? lv_color_hex(0x111111) : lv_color_hex(0xCCCCCC);
-
+          bg_color: !lambda return lv_color_hex(tray::bg(x));
+          # ink follows the filament, so the number stays readable on white PLA
+          text_color: !lambda return lv_color_hex(tray::ink(x));
   - id: ${uid}_ams_${ams_id}_tray_2_remain
     platform: homeassistant
     entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_tray_2
@@ -87,46 +50,9 @@ text_sensor:
     on_value:
       - lvgl.widget.update:
           id: ${uid}_ams_${ams_id}_tray_2_obj
-          bg_color: !lambda |-
-            // HA sends "unavailable" or "None" when a tray or a whole unit goes
-            // away, and this build has no C++ exceptions, so std::stoi on that
-            // does not throw -- it aborts, which reboots the panel. strtol cannot,
-            // and the length/prefix check rejects anything that is not #RRGGBB
-            // or #RRGGBBAA before it gets there.
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0x42495A); // the tile's own background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0x42495A);
-            }
-            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-          # the percentage sits inside the pill, so its colour has to follow the
-          # filament: light grey vanishes on white PLA, dark ink on black.
-          # Relative luminance with the sRGB gamma curve, not a weighted average
-          # of the raw bytes -- the cheap version reads Bambu's green as dark and
-          # puts light text on it at 1.8:1, where dark ink gives 6.4:1. 0.179 is
-          # where the two contrast ratios cross over.
-          text_color: !lambda |-
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0xCCCCCC); // readable on the fallback background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0xCCCCCC);
-            }
-            int intR = (rgb >> 16) & 0xFF, intG = (rgb >> 8) & 0xFF, intB = rgb & 0xFF;
-            auto lin = [](int v) {
-              float c = v / 255.0f;
-              return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
-            };
-            float luminance = 0.2126f * lin(intR) + 0.7152f * lin(intG) + 0.0722f * lin(intB);
-            return luminance > 0.179f ? lv_color_hex(0x111111) : lv_color_hex(0xCCCCCC);
-
+          bg_color: !lambda return lv_color_hex(tray::bg(x));
+          # ink follows the filament, so the number stays readable on white PLA
+          text_color: !lambda return lv_color_hex(tray::ink(x));
   - id: ${uid}_ams_${ams_id}_tray_3_remain
     platform: homeassistant
     entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_tray_3
@@ -147,46 +73,9 @@ text_sensor:
     on_value:
       - lvgl.widget.update:
           id: ${uid}_ams_${ams_id}_tray_3_obj
-          bg_color: !lambda |-
-            // HA sends "unavailable" or "None" when a tray or a whole unit goes
-            // away, and this build has no C++ exceptions, so std::stoi on that
-            // does not throw -- it aborts, which reboots the panel. strtol cannot,
-            // and the length/prefix check rejects anything that is not #RRGGBB
-            // or #RRGGBBAA before it gets there.
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0x42495A); // the tile's own background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0x42495A);
-            }
-            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-          # the percentage sits inside the pill, so its colour has to follow the
-          # filament: light grey vanishes on white PLA, dark ink on black.
-          # Relative luminance with the sRGB gamma curve, not a weighted average
-          # of the raw bytes -- the cheap version reads Bambu's green as dark and
-          # puts light text on it at 1.8:1, where dark ink gives 6.4:1. 0.179 is
-          # where the two contrast ratios cross over.
-          text_color: !lambda |-
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0xCCCCCC); // readable on the fallback background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0xCCCCCC);
-            }
-            int intR = (rgb >> 16) & 0xFF, intG = (rgb >> 8) & 0xFF, intB = rgb & 0xFF;
-            auto lin = [](int v) {
-              float c = v / 255.0f;
-              return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
-            };
-            float luminance = 0.2126f * lin(intR) + 0.7152f * lin(intG) + 0.0722f * lin(intB);
-            return luminance > 0.179f ? lv_color_hex(0x111111) : lv_color_hex(0xCCCCCC);
-
+          bg_color: !lambda return lv_color_hex(tray::bg(x));
+          # ink follows the filament, so the number stays readable on white PLA
+          text_color: !lambda return lv_color_hex(tray::ink(x));
   - id: ${uid}_ams_${ams_id}_tray_4_remain
     platform: homeassistant
     entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_tray_4
@@ -207,42 +96,6 @@ text_sensor:
     on_value:
       - lvgl.widget.update:
           id: ${uid}_ams_${ams_id}_tray_4_obj
-          bg_color: !lambda |-
-            // HA sends "unavailable" or "None" when a tray or a whole unit goes
-            // away, and this build has no C++ exceptions, so std::stoi on that
-            // does not throw -- it aborts, which reboots the panel. strtol cannot,
-            // and the length/prefix check rejects anything that is not #RRGGBB
-            // or #RRGGBBAA before it gets there.
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0x42495A); // the tile's own background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0x42495A);
-            }
-            return lv_color_make((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-          # the percentage sits inside the pill, so its colour has to follow the
-          # filament: light grey vanishes on white PLA, dark ink on black.
-          # Relative luminance with the sRGB gamma curve, not a weighted average
-          # of the raw bytes -- the cheap version reads Bambu's green as dark and
-          # puts light text on it at 1.8:1, where dark ink gives 6.4:1. 0.179 is
-          # where the two contrast ratios cross over.
-          text_color: !lambda |-
-            if ((x.size() != 7 && x.size() != 9) || x[0] != '#') {
-              return lv_color_hex(0xCCCCCC); // readable on the fallback background
-            }
-            std::string hex = x.substr(1, 6); // named, or `end` would dangle into a temporary
-            char *end = nullptr;
-            long rgb = strtol(hex.c_str(), &end, 16);
-            if (end == nullptr || *end != '\0') {
-              return lv_color_hex(0xCCCCCC);
-            }
-            int intR = (rgb >> 16) & 0xFF, intG = (rgb >> 8) & 0xFF, intB = rgb & 0xFF;
-            auto lin = [](int v) {
-              float c = v / 255.0f;
-              return c <= 0.04045f ? c / 12.92f : powf((c + 0.055f) / 1.055f, 2.4f);
-            };
-            float luminance = 0.2126f * lin(intR) + 0.7152f * lin(intG) + 0.0722f * lin(intB);
-            return luminance > 0.179f ? lv_color_hex(0x111111) : lv_color_hex(0xCCCCCC);
+          bg_color: !lambda return lv_color_hex(tray::bg(x));
+          # ink follows the filament, so the number stays readable on white PLA
+          text_color: !lambda return lv_color_hex(tray::ink(x));

@@ -1,3 +1,7 @@
+esphome:
+  includes:
+    - widgets/printers/tray_color.h # tray::bg / tray::ink, shared by every tray pill
+
 font: !include
   file: fonts/fonts.yaml
   vars:
