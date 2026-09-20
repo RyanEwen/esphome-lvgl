@@ -1,0 +1,11 @@
+# Gitignore settings for ESPHome
+#
+# No leading slash on any of these: a build run from a subdirectory, or a
+# per-room config kept in one, puts its own .esphome/ and secrets.yaml there,
+# and an anchored pattern would let `git add -A` sweep them in.
+.esphome/
+secrets.yaml
+.env
+
+# macOS
+.DS_Store
