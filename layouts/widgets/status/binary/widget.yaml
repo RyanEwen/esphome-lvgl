@@ -9,6 +9,9 @@
 
 # obj: # an obj, not a button — the theme renders it darker, so it reads as not pressable
   id: ${uid}_widget
+  on_click: # never fires -- an obj is not pressable. It exists so a missing
+            # sensors package is a build error rather than a tile stuck on "..."
+    - lambda: (void) id(${uid}_widget_sensor);
   width: ${width}
   height: ${height}
   border_width: 0
