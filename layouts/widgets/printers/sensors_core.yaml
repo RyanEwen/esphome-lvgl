@@ -45,6 +45,9 @@ text_sensor:
     entity_id: sensor.${entity_id_prefix}_print_status
     filters:
       - lambda: |-
+          if (x.empty()) {
+            return x;
+          }
           x[0] = toupper(x[0]);
           return x;
     on_value:

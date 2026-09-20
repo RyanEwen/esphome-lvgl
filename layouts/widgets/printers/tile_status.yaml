@@ -14,8 +14,8 @@
     flex_flow: ROW
     flex_align_main: SPACE_BETWEEN
   widgets:
-    - label:
-        hidden: true
+    - label: # the word, not just the bar colour: idle, offline and printing
+             # were otherwise distinguishable only by a 4px hairline
         width: SIZE_CONTENT
         id: ${uid}_print_status_lbl
         text: " "
