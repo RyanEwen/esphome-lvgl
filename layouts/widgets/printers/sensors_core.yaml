@@ -87,10 +87,31 @@ text_sensor:
                             indicator:
                               bg_color: 0x4CAF50
                       else:
-                        - lvgl.bar.update:
-                            id: ${uid}_print_progress_bar
-                            indicator:
-                              bg_color: 0x00B6FF
+                        - if:
+                            condition:
+                              or:
+                                - text_sensor.state:
+                                    id: ${uid}_print_status
+                                    state: 'Offline'
+                                - text_sensor.state:
+                                    id: ${uid}_print_status
+                                    state: 'Idle'
+                                - text_sensor.state:
+                                    id: ${uid}_print_status
+                                    state: 'Unknown'
+                            then:
+                              # not printing: a full blue bar left over from the
+                              # last job read as a job at 100%
+                              - lvgl.bar.update:
+                                  id: ${uid}_print_progress_bar
+                                  value: 0
+                                  indicator:
+                                    bg_color: 0x9AA0AE
+                            else:
+                              - lvgl.bar.update:
+                                  id: ${uid}_print_progress_bar
+                                  indicator:
+                                    bg_color: 0x00B6FF
       - script.execute: ${uid}_refresh_end_time
 
   # reported in hours as a float, so converted to whole minutes
