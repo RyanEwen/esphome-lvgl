@@ -1,0 +1,31 @@
+# Needs two glyphs that are not in the default subset -- add them to
+# layouts/fonts/glyphs.yaml before using this tile, or the shield renders as a
+# missing-glyph box:
+#   - "\U000F068A" # shield-home
+#   - "\U000F099D" # shield-lock
+#
+# required vars:
+# - uid
+# - width
+# - height
+
+# obj: # status only; arming from the panel would need a code entry screen
+  id: ${uid}_widget
+  on_click: # never fires -- an obj is not pressable. It exists so a missing
+            # sensors package is a build error rather than a tile stuck on "..."
+    - lambda: (void) id(${uid}_widget_sensor);
+  width: ${width}
+  height: ${height}
+  border_width: 0
+  radius: 20
+  widgets:
+    - label:
+        id: ${uid}_widget_icon
+        text: "\U000F068A"
+        text_font: mdi_md
+        text_color: 0x9AA0AE
+        align: TOP_LEFT
+    - label:
+        id: ${uid}_widget_text
+        text: Alarm
+        align: BOTTOM_LEFT

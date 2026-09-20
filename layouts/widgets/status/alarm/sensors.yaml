@@ -1,0 +1,30 @@
+# required vars:
+# - uid
+# - entity_id
+
+text_sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_widget_text
+          text: !lambda |-
+            if (x == "disarmed") return std::string("Disarmed");
+            if (x == "armed_home") return std::string("Armed Home");
+            if (x == "armed_away") return std::string("Armed Away");
+            if (x == "armed_night") return std::string("Armed Night");
+            if (x == "armed_vacation") return std::string("Armed Away");
+            if (x == "arming") return std::string("Arming");
+            if (x == "pending") return std::string("Pending");
+            if (x == "triggered") return std::string("TRIGGERED");
+            return std::string("Alarm");
+      - lvgl.label.update:
+          id: ${uid}_widget_icon
+          text: !lambda |-
+            if (x == "disarmed") return std::string("\U000F068A"); // shield-home
+            return std::string("\U000F099D"); // shield-lock
+          text_color: !lambda |-
+            if (x == "triggered") return lv_color_hex(0xFF6B60);
+            if (x == "disarmed") return lv_color_hex(0x9AA0AE);
+            return lv_color_hex(0xFFD700);

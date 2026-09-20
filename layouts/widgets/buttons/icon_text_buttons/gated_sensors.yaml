@@ -1,0 +1,67 @@
+# A stateful tile whose device can vanish, e.g. a printer's chamber light.
+#
+# Use this INSTEAD of the tile's normal sensors package, not alongside it. Two
+# independent on_state handlers cannot do this job: at boot Home Assistant
+# pushes every subscribed state with no defined order, so a gate that hides the
+# state and a state handler that shows it simply race, and the loser is whoever
+# fires first. Both subscriptions call one script instead, so the tile is
+# painted from both facts at once however they arrive.
+#
+# Why gate at all: Home Assistant keeps reporting the last known state of a
+# device that has gone away -- ha-bambulab freezes a printer's entities rather
+# than marking them unavailable, so a chamber light reads "on" all night after
+# the printer is powered off. And when an integration does mark an entity
+# unavailable, ESPHome's homeassistant binary_sensor maps only the literal "on"
+# to true and publishes nothing at all for "unavailable", which freezes the tile
+# just the same.
+#
+# required vars:
+# - uid
+# - entity_id           # the thing the tile controls
+# - available_entity_id # a binary_sensor that is on when the device is reachable
+
+binary_sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    trigger_on_initial_state: true
+    on_state:
+      - script.execute: ${uid}_repaint
+
+  - id: ${uid}_available
+    platform: homeassistant
+    entity_id: ${available_entity_id}
+    trigger_on_initial_state: true
+    on_state:
+      - script.execute: ${uid}_repaint
+
+script:
+  - id: ${uid}_repaint
+    mode: restart
+    then:
+      - if:
+          condition:
+            - binary_sensor.is_on: ${uid}_available
+          then:
+            - if:
+                condition:
+                  - binary_sensor.is_on: ${uid}_widget_sensor
+                then:
+                  - lvgl.widget.hide:
+                      - ${uid}_widget_unknown
+                      - ${uid}_widget_off
+                  - lvgl.widget.show:
+                      - ${uid}_widget_on
+                else:
+                  - lvgl.widget.hide:
+                      - ${uid}_widget_unknown
+                      - ${uid}_widget_on
+                  - lvgl.widget.show:
+                      - ${uid}_widget_off
+          else:
+            # unreachable: say so rather than repeating what it last said
+            - lvgl.widget.hide:
+                - ${uid}_widget_on
+                - ${uid}_widget_off
+            - lvgl.widget.show:
+                - ${uid}_widget_unknown

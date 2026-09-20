@@ -1,0 +1,44 @@
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+# - icon_open
+# - icon_closed
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  widgets:
+    - label:
+        id: ${uid}_widget_unknown
+        text: "\U000F01D8"
+        text_font: mdi_md
+        align: TOP_LEFT
+    - label:
+        id: ${uid}_widget_open
+        text: ${icon_open}
+        text_font: mdi_md
+        text_color: 0xFFD700
+        align: TOP_LEFT
+        hidden: true
+    - label:
+        id: ${uid}_widget_closed
+        text: ${icon_closed}
+        text_font: mdi_md
+        align: TOP_LEFT
+        hidden: true
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        align: BOTTOM_LEFT
+  on_long_press: # long press only, so a stray touch cannot move the door
+    # build-time proof that this tile's sensors package was included: a missing
+    # one used to leave the tile showing the unknown glyph forever, silently
+    - lambda: (void) id(${uid}_widget_sensor);
+    - homeassistant.action:
+        action: cover.toggle
+        data:
+          entity_id: ${entity_id}

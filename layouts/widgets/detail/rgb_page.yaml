@@ -1,0 +1,125 @@
+# required vars:
+# - page_pad_top
+# - page_pad_bottom
+# - container_pad_left
+# - container_pad_right
+# - pad_row
+# - slider_height
+# - arc_size
+# - roller_height
+# - back_height
+
+# colour and effect are write-only: HA reports hs_color as a list and effect as a
+# name, neither of which a homeassistant sensor can feed back into an arc or roller.
+
+# - id: detail_rgb
+  skip: true
+  pad_top: ${page_pad_top}
+  pad_bottom: ${page_pad_bottom}
+  on_load:
+    - lvgl.label.update:
+        id: page_title
+        text: !lambda return id(detail_title);
+  widgets:
+    - obj:
+        width: 100%
+        height: 100%
+        border_width: 0
+        radius: 0
+        pad_top: 0
+        pad_bottom: 0
+        pad_left: ${container_pad_left}
+        pad_right: ${container_pad_right}
+        layout:
+          type: FLEX
+          flex_flow: ROW_WRAP
+          flex_align_main: CENTER
+          pad_row: ${pad_row}
+          pad_column: ${pad_row}
+        widgets:
+          - slider:
+              id: detail_rgb_slider
+              width: 100%
+              height: ${slider_height}
+              min_value: 1
+              max_value: 100
+              on_change:
+                - lvgl.label.update:
+                    id: detail_rgb_value
+                    text: !lambda return std::to_string((int) x) + "%";
+              on_release:
+                - homeassistant.action:
+                    action: light.turn_on
+                    data:
+                      entity_id: !lambda return id(detail_entity);
+                      brightness_pct: !lambda return (int) x;
+
+          - arc: # hue
+              id: detail_rgb_hue
+              width: ${arc_size}
+              height: ${arc_size}
+              adjustable: true # default is false, which leaves the arc untouchable
+              min_value: 0
+              max_value: 359
+              on_release:
+                - homeassistant.action: &apply_hs
+                    action: light.turn_on
+                    data:
+                      entity_id: !lambda return id(detail_entity);
+                    variables: # rendered HA-side, so hs_color arrives as a real list
+                      hue: !lambda return (int) lv_arc_get_value(id(detail_rgb_hue));
+                      sat: !lambda return (int) lv_arc_get_value(id(detail_rgb_sat));
+                    data_template:
+                      hs_color: "{{ [hue | int, sat | int] }}"
+
+          - arc: # saturation
+              id: detail_rgb_sat
+              width: ${arc_size}
+              height: ${arc_size}
+              adjustable: true # default is false, which leaves the arc untouchable
+              min_value: 0
+              max_value: 100
+              value: 100
+              on_release:
+                - homeassistant.action: *apply_hs
+
+          - label:
+              id: detail_rgb_value
+              width: 100%
+              height: SIZE_CONTENT
+              text: "--"
+              align: CENTER
+
+          - roller:
+              id: detail_rgb_effect
+              width: 100%
+              height: ${roller_height}
+              options: # a curated slice of the 216 WLED effects
+                - Solid
+                - Breathe
+                - Candle
+                - Fire 2012
+                - Aurora
+                - Colorloop
+                - Rainbow
+                - Lake
+                - Pacifica
+                - Twinklefox
+                - TV Simulator
+              on_change:
+                - homeassistant.action:
+                    action: light.turn_on
+                    data:
+                      entity_id: !lambda return id(detail_entity);
+                      effect: !lambda return text;
+
+          - button:
+              width: 100%
+              height: ${back_height}
+              on_short_click:
+                - lambda: |-
+                    id(main_lvgl)->show_page(id(detail_origin), LV_SCREEN_LOAD_ANIM_NONE, 0);
+              widgets:
+                - label:
+                    align: CENTER
+                    text: Back
