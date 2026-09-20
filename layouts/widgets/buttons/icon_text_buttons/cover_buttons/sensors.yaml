@@ -1,0 +1,31 @@
+# required vars:
+# - uid
+# - entity_id
+# - text
+
+text_sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - if:
+          condition:
+            - lambda: return x == "closed";
+          then:
+            - lvgl.widget.hide:
+                - ${uid}_widget_unknown
+                - ${uid}_widget_open
+            - lvgl.widget.show:
+                - ${uid}_widget_closed
+          else:
+            - lvgl.widget.hide:
+                - ${uid}_widget_unknown
+                - ${uid}_widget_closed
+            - lvgl.widget.show:
+                - ${uid}_widget_open
+      - lvgl.label.update:
+          id: ${uid}_widget_text
+          text: !lambda |-
+            if (x == "opening") return std::string("Opening");
+            if (x == "closing") return std::string("Closing");
+            return std::string("${text}");

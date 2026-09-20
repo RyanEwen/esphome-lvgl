@@ -1,0 +1,25 @@
+# required vars:
+# - uid
+# - entity_id
+
+<<: !include ../stateful_sensors.yaml
+
+sensor:
+  - id: ${uid}_brightness
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: brightness # 0-255, and absent (NAN here) while the light is off
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return !std::isnan(x)
+                  && id(detail_entity) == "${entity_id}"
+                  && !lv_obj_has_state(id(detail_slider), LV_STATE_PRESSED);
+          then:
+            - lvgl.slider.update:
+                id: detail_slider
+                value: !lambda return x / 2.55f;
+            - lvgl.label.update:
+                id: detail_value
+                text: !lambda return std::to_string((int) (x / 2.55f)) + "%";

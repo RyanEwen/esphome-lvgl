@@ -1,0 +1,44 @@
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+# - icon_on
+# - icon_off
+
+# button:
+  <<: !include
+    file: ../stateful.yaml
+    vars:
+      uid: ${uid}
+      width: ${width}
+      height: ${height}
+      icon_on: ${icon_on}
+      icon_off: ${icon_off}
+      text: ${text}
+  on_short_click: # no brightness_pct, or a tap would undo the slider
+    # build-time proof that this tile's sensors package was included: a missing
+    # one used to leave the tile showing the unknown glyph forever, silently
+    - lambda: (void) id(${uid}_widget_sensor);
+    - homeassistant.action:
+        action: light.toggle
+        data:
+          entity_id: ${entity_id}
+  on_long_press:
+    - lambda: |-
+        id(detail_entity) = "${entity_id}";
+        id(detail_title) = "${text}";
+        id(detail_origin) = id(main_lvgl)->get_current_page();
+    - lvgl.slider.update:
+        id: detail_slider
+        animated: false
+        value: !lambda |-
+          float b = id(${uid}_brightness).state;
+          return std::isnan(b) ? 1.0f : b / 2.55f;
+    - lvgl.label.update:
+        id: detail_value
+        text: !lambda |-
+          float b = id(${uid}_brightness).state;
+          return std::to_string(std::isnan(b) ? 1 : (int) (b / 2.55f)) + "%";
+    - lvgl.page.show: detail_light

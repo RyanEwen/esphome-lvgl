@@ -1,0 +1,28 @@
+# required vars:
+# - uid
+# - entity_id
+
+# a text_sensor, not a binary_sensor: a player that is on reports playing / paused /
+# idle as often as it reports on, and only the literal "on" maps to true.
+
+text_sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return x != "off" && x != "standby" && x != "unavailable" && x != "unknown" && !x.empty();
+          then:
+            - lvgl.widget.hide:
+                - ${uid}_widget_unknown
+                - ${uid}_widget_off
+            - lvgl.widget.show:
+                - ${uid}_widget_on
+          else:
+            - lvgl.widget.hide:
+                - ${uid}_widget_unknown
+                - ${uid}_widget_on
+            - lvgl.widget.show:
+                - ${uid}_widget_off

@@ -1,0 +1,72 @@
+# required vars:
+# - page_styles_pad_top
+# - page_styles_pad_bottom
+# - container_pad_left
+# - container_pad_right
+# - pad_row
+# - slider_height
+# - back_height
+
+# a single shared detail page: the long-press handler that opens it has already
+# stashed the entity, the title and the page to return to in globals.
+
+# - id: detail_light
+  skip: true # reachable only via lvgl.page.show, never prev/next
+  pad_top: ${page_styles_pad_top}
+  pad_bottom: ${page_styles_pad_bottom}
+  on_load:
+    - lvgl.label.update:
+        id: page_title
+        text: !lambda return id(detail_title);
+  widgets:
+    - obj:
+        width: 100%
+        height: 100%
+        border_width: 0
+        radius: 0
+        pad_top: 0
+        pad_bottom: 0
+        pad_left: ${container_pad_left}
+        pad_right: ${container_pad_right}
+        layout:
+          type: FLEX
+          flex_flow: ROW_WRAP
+          flex_align_main: CENTER
+          pad_row: ${pad_row}
+          pad_column: ${pad_row}
+        widgets:
+          - label:
+              id: detail_value
+              width: 100%
+              height: SIZE_CONTENT
+              text: "--"
+              text_font: roboto_xxl
+              align: CENTER
+
+          - slider:
+              id: detail_slider
+              width: 100%
+              height: ${slider_height}
+              min_value: 1
+              max_value: 100
+              on_change: # user drag only; lvgl.*.update fires UPDATE_EVENT instead
+                - lvgl.label.update:
+                    id: detail_value
+                    text: !lambda return std::to_string((int) x) + "%";
+              on_release:
+                - homeassistant.action:
+                    action: light.turn_on
+                    data:
+                      entity_id: !lambda return id(detail_entity);
+                      brightness_pct: !lambda return (int) x;
+
+          - button:
+              width: 100%
+              height: ${back_height}
+              on_short_click:
+                - lambda: |-
+                    id(main_lvgl)->show_page(id(detail_origin), LV_SCREEN_LOAD_ANIM_NONE, 0);
+              widgets:
+                - label:
+                    align: CENTER
+                    text: Back

@@ -1,0 +1,19 @@
+# required vars:
+# - uid
+# - entity_id
+# - unit
+
+sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_widget_value
+          # an unavailable sensor publishes NAN, and lroundf(NaN) is undefined --
+          # it printed 2147483647 and overflowed the tile
+          text: !lambda |-
+            if (std::isnan(x)) {
+              return std::string("--");
+            }
+            return std::to_string((int) lroundf(x)) + "${unit}";
