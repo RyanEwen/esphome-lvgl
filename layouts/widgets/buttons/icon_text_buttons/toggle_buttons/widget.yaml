@@ -22,6 +22,9 @@
       icon_off: ${icon_off}
       text: ${text}
   on_short_click:
+    # build-time proof that this tile's sensors package was included: a missing
+    # one used to leave the tile showing the unknown glyph forever, silently
+    - lambda: (void) id(${uid}_widget_sensor);
     - homeassistant.action:
         action: ${domain}.toggle
         data:
