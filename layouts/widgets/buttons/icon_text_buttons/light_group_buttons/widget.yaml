@@ -25,9 +25,3 @@
         data:
           entity_id: ${entity_id}
           brightness_pct: '100'
-  on_long_press:
-    - homeassistant.action:
-        action: light.turn_on
-        data:
-          entity_id: ${entity_id}
-          brightness_pct: '1'
