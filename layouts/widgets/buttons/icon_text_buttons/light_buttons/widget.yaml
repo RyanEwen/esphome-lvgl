@@ -7,24 +7,15 @@
 
 # button:
   <<: !include
-    file: ../stateful.yaml
+    file: themed.yaml
     vars:
       uid: ${uid}
       entity_id: ${entity_id}
       width: ${width}
       height: ${height}
+      text: ${text}
       icon_on: "\U000F06E8"
       icon_off: "\U000F0336"
-      text: ${text}
-  on_short_click:
-    # build-time proof that this tile's sensors package was included: without it
-    # a forgotten package leaves the tile on the unknown glyph, silently
-    - lambda: (void) id(${uid}_widget_sensor);
-    - homeassistant.action:
-        action: light.toggle
-        data:
-          entity_id: ${entity_id}
-          brightness_pct: '100'
   on_long_press:
     - homeassistant.action:
         action: light.turn_on
