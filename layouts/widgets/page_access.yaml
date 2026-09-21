@@ -1,0 +1,57 @@
+# A page's place in the page switcher: a Show switch, and an entry in the Home
+# page list. Every navigable page includes this once, as a package.
+# required vars:
+#   page: the page's id
+
+switch:
+  - id: show_${page}_page
+    platform: template
+    name: Show ${page} page
+    icon: mdi:eye
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_state:
+      # A page given `skip: true` in YAML is off this panel altogether, and
+      # its switch leaves it alone. Nothing else writes skip, so the first
+      # call -- the restore at boot -- still sees the YAML value.
+      - lambda: |-
+          static const bool removed = id(${page})->skip;
+          if (!removed)
+            id(${page})->skip = !x;
+      - if:
+          condition:
+            - lambda: return !x;
+          then:
+            - if:
+                condition:
+                  - lambda: return id(home_page_select).current_option() == "${page}";
+                then: # the home page can't be hidden
+                  - switch.turn_on: show_${page}_page
+                else:
+                  - if:
+                      condition:
+                        - lambda: return id(${page})->is_showing();
+                      then:
+                        - script.execute: go_home
+
+select:
+  - id: !extend home_page_select
+    options:
+      - ${page}
+    on_value:
+      # choosing a hidden page as home shows it again
+      - if:
+          condition:
+            - lambda: return x == "${page}";
+          then:
+            - switch.turn_on: show_${page}_page
+
+script:
+  - id: !extend go_home
+    then:
+      - if:
+          condition:
+            - lambda: return id(home_page_select).current_option() == "${page}";
+          then:
+            - lvgl.page.show: ${page}

@@ -17,6 +17,7 @@
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
 * `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
 * The boot screen is dark rather than white, so a reboot at night does not light the room.
+* `480x320` panels have a **Home page** select and a **Show \<page\> page** switch per page in Home Assistant. By default every page shows and home is `home_page`, so nothing changes until you use them. A page hidden with `skip: true` in YAML stays hidden. See "How to run one image on several panels".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -122,6 +123,8 @@ substitutions:
   home_page: printers
 ```
 
+On `480x320` panels this is the default for the **Home page** select in Home Assistant, which changes it on a running panel.
+
 ### How to hide pages on particular devices
 The simplest way is to leave the page out of the device's page list (see "How to choose which pages a device shows").
 
@@ -134,6 +137,24 @@ lvgl:
     - id: !extend bedroom
       skip: true
 ```
+
+On `480x320` panels each page also has a **Show \<page\> page** switch in Home Assistant, which hides and shows it on a running panel; the home page can't be hidden, and a page given `skip: true` stays hidden whatever its switch says. To have a page start hidden but leave Home Assistant able to show it, default its switch to off instead:
+```yaml
+switch:
+  - id: !extend show_bedroom_page
+    restore_mode: RESTORE_DEFAULT_OFF
+```
+
+### How to run one image on several panels
+Build one config and flash the same firmware to every panel of the same board, then set each one up from Home Assistant. Add this to the config:
+```yaml
+esphome:
+  ...
+  name_add_mac_suffix: true
+```
+Each panel then appends the end of its MAC address to its name (`guition-35-test-eda9b8`), so Home Assistant adds each one as its own device. Rename them there, and pick each panel's **Home page** and **Show \<page\> page** switches. The image has to carry every room's pages.
+
+Two things to know: `esphome upload` can no longer find the panel by name, so pass each one's address with `--device`; and every panel shares the API key in `secrets.yaml`. Hiding a page only takes it off the touch screen; the panel still subscribes to every entity, and its web server can flip the switches.
 
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.

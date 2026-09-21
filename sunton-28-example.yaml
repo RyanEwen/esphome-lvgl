@@ -1,6 +1,7 @@
 esphome:
   name: sunton-28-test
   friendly_name: Sunton 2.8" Test
+  # name_add_mac_suffix: true   # one image on several panels -- see the README
 
 substitutions:
   home_page: lighting_1

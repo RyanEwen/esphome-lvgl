@@ -119,6 +119,8 @@ lvgl:
                       <<: !include ../vars/button.yaml
 
 packages:
+  living_room_access: !include { file: ../../widgets/page_access.yaml, vars: { page: living_room } }
+
   living_room_light_1_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
     uid: living_room_light_1,
     entity_id: light.living_room_light_1
