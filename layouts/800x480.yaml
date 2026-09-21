@@ -1,3 +1,12 @@
+esphome:
+  # Go home once everything is set up, rather than from splash's on_load: a
+  # page.show inside the first page's own load event is dropped, and splash is
+  # only the first page while no package adds one ahead of it.
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: go_home
+
 font: !include
   file: fonts/fonts.yaml
   vars:
@@ -68,11 +77,8 @@ lvgl:
       - <<: !include { file: widgets/footer/widget.yaml, vars: { <<: *nav_widget_vars } }
       - <<: !include { file: widgets/boot_screen/widget.yaml }
   pages:
-    - id: splash
+    - id: splash # blank until on_boot goes home
       skip: true
-      on_load:
-        - delay: 250ms # page.show is dropped if called during this on_load
-        - script.execute: go_home
 
     - id: lighting_1
       <<: *page_styles
