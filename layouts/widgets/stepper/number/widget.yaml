@@ -1,0 +1,14 @@
+# A stepper tile for a `number` or `input_number` entity -- a setpoint, a
+# timer length, a volume. Pair with number/sensors.yaml, same uid.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+# - icon
+# - button_width
+# - value_width
+
+# obj:
+  <<: !include ../widget.yaml

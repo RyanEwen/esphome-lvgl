@@ -1,0 +1,5 @@
+# 320x240: a full-width stepper tile, and its - / + buttons and value.
+width: 232
+height: 75
+button_width: 40
+value_width: 52

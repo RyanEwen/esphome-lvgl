@@ -1,0 +1,48 @@
+# Climate: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: climate
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Climate
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - obj: # thermostat
+                  <<: !include
+                    file: ../../widgets/stepper/climate/widget.yaml
+                    vars:
+                      uid: living_room_thermostat
+                      text: Thermostat
+                      <<: !include ../vars/stepper.yaml
+
+              - obj: # fan speed
+                  <<: !include
+                    file: ../../widgets/stepper/number/widget.yaml
+                    vars:
+                      uid: bedroom_fan_speed
+                      text: Fan
+                      icon: "\U000F0210" # fan
+                      <<: !include ../vars/stepper.yaml
+
+packages:
+  living_room_thermostat_sensors: !include { file: ../../widgets/stepper/climate/sensors.yaml, vars: {
+    uid: living_room_thermostat,
+    entity_id: climate.living_room,
+    step: 1
+  }}
+
+  bedroom_fan_speed_sensors: !include { file: ../../widgets/stepper/number/sensors.yaml, vars: {
+    uid: bedroom_fan_speed,
+    entity_id: input_number.bedroom_fan_speed,
+    domain: input_number,
+    unit: "%"
+  }}

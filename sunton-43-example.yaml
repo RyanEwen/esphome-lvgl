@@ -13,6 +13,7 @@ packages:
   # pages: !include layouts/800x480/all.yaml
   lighting_1: !include layouts/800x480/pages/lighting_1.yaml
   lighting_2: !include layouts/800x480/pages/lighting_2.yaml
+  # climate: !include layouts/800x480/pages/climate.yaml  # thermostat and number steppers
   printers: !include layouts/800x480/pages/printers.yaml
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle

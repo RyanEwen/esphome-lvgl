@@ -13,6 +13,7 @@ packages:
   # pages: !include layouts/480x320/all.yaml
   bedroom: !include layouts/480x320/pages/bedroom.yaml
   living_room: !include layouts/480x320/pages/living_room.yaml
+  # climate: !include layouts/480x320/pages/climate.yaml  # thermostat and number steppers
   lighting_1: !include layouts/480x320/pages/lighting_1.yaml
   lighting_2: !include layouts/480x320/pages/lighting_2.yaml
   lighting_3: !include layouts/480x320/pages/lighting_3.yaml
