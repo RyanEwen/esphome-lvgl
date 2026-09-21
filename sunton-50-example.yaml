@@ -17,3 +17,4 @@ packages:
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun
+  # ble_proxy: !include features/ble_proxy/ble_proxy.yaml  # Bluetooth proxy for HA -- see the README first

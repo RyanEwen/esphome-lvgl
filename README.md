@@ -17,6 +17,7 @@
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
 * `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
 * The boot screen is dark rather than white, so a reboot at night does not light the room.
+* Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -92,6 +93,17 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 
 ### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
+
+### `features/ble_proxy/ble_proxy.yaml`
+Makes the panel a [Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/) for Home Assistant, relaying advertisements and lending connection slots, so HA's Bluetooth reaches the room the panel is in. The **Bluetooth proxy** switch starts and stops the whole Bluetooth stack without a reflash; `ble_proxy_default` (`ON` or `OFF`) sets its first value.
+
+It is not free, which is why it is a feature and off in the examples. Measured on a Guition `JC3248W535`:
+
+* **Boards:** needs PSRAM and ~400KB of flash, so the Guition and the Sunton `ESP32-8048S043` / `ESP32-8048S050` only. The Elecrow and the CYD have no PSRAM, and the CYD's firmware no longer fits its app partition.
+* **RAM:** ~95KB of internal RAM while running, which on the ESP32-S3 cannot move to PSRAM. Free heap went from 157KB to 62KB, and its low point from 135KB to 26KB.
+* **WiFi:** WiFi and Bluetooth share one radio. Packet loss did not change, but the slowest replies got slower (p99 ping 1.0s to 2.5s). ESPHome's default scans continuously, which was worse again, so this feature listens 30ms in every 320ms instead. A panel with a weak WiFi signal feels this most.
+* **CPU:** ~2% of a core.
+* **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
 
 ## How-tos
 ### How to choose which pages a device shows
