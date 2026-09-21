@@ -1,0 +1,4 @@
+# 480x320: a page's padding.
+<<: !include ../../styles/page_styles.yaml
+pad_top: 50
+pad_bottom: 50

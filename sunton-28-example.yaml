@@ -9,6 +9,13 @@ packages:
   common: !include common.yaml
   device: !include devices/ESP32-2432S028R.yaml
   layout: !include layouts/320x240.yaml
+  # pages, in navigation order -- or every page at once:
+  # pages: !include layouts/320x240/all.yaml
+  bedroom: !include layouts/320x240/pages/bedroom.yaml
+  living_room: !include layouts/320x240/pages/living_room.yaml
+  lighting_1: !include layouts/320x240/pages/lighting_1.yaml
+  lighting_2: !include layouts/320x240/pages/lighting_2.yaml
+  lighting_3: !include layouts/320x240/pages/lighting_3.yaml
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun

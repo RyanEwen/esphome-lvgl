@@ -1,0 +1,144 @@
+# Inside Lighting: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: lighting_1
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Inside Lighting
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - button: # second floor lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/widget.yaml
+                    vars:
+                      uid: second_floor_lights
+                      entity_id: light.second_floor_lights
+                      text: Second Floor
+                      <<: !include ../vars/wide_button.yaml
+
+              - button: # bedroom lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: all_bedroom_lights
+                      entity_id: light.all_bedroom_lights
+                      text: Bedroom
+                      <<: !include ../vars/button.yaml
+
+              - button: # railyn light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: railyns_light
+                      entity_id: light.railyns_light
+                      text: Railyn
+                      <<: !include ../vars/button.yaml
+
+              - button: # ryan's office light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: all_ryan_s_office_lights
+                      entity_id: light.all_ryan_s_office_lights
+                      text: Office
+                      <<: !include ../vars/button.yaml
+
+              - button: # upstairs hallway light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: upstairs_hallway_light
+                      entity_id: light.upstairs_hallway_light
+                      text: Hallway
+                      <<: !include ../vars/button.yaml
+
+              - button: # main floor lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/widget.yaml
+                    vars:
+                      uid: main_floor_lights
+                      entity_id: light.main_floor_lights
+                      text: Main Floor
+                      <<: !include ../vars/wide_button.yaml
+
+              - button: # living room light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: all_living_room_lights
+                      entity_id: light.all_living_room_lights
+                      text: Living Room
+                      <<: !include ../vars/button.yaml
+
+              - button: # kitchen light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: kitchen_light
+                      entity_id: light.kitchen_light
+                      text: Kitchen
+                      <<: !include ../vars/button.yaml
+
+              - button: # rachel's office light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: rachels_office_light
+                      entity_id: light.rachels_office_light
+                      text: Office
+                      <<: !include ../vars/button.yaml
+
+packages:
+  second_floor_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/sensors.yaml, vars: {
+    uid: second_floor_lights,
+    entity_id: light.second_floor_lights
+  }}
+
+  all_bedroom_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: all_bedroom_lights,
+    entity_id: light.all_bedroom_lights
+  }}
+
+  railyns_light_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: railyns_light,
+    entity_id: light.railyns_light
+  }}
+
+  ryans_office_light_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: all_ryan_s_office_lights,
+    entity_id: light.all_ryan_s_office_lights
+  }}
+
+  upstairs_hallway_light_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: upstairs_hallway_light,
+    entity_id: light.upstairs_hallway_light
+  }}
+
+  main_floor_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/sensors.yaml, vars: {
+    uid: main_floor_lights,
+    entity_id: light.main_floor_lights
+  }}
+
+  all_living_room_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: all_living_room_lights,
+    entity_id: light.all_living_room_lights
+  }}
+
+  kitchen_light_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: kitchen_light,
+    entity_id: light.kitchen_light
+  }}
+
+  rachels_office_light_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: rachels_office_light,
+    entity_id: light.rachels_office_light
+  }}

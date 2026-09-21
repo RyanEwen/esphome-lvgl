@@ -9,6 +9,14 @@ packages:
   common: !include common.yaml
   device: !include devices/JC3248W535.yaml
   layout: !include layouts/480x320.yaml
+  # pages, in navigation order -- or every page at once:
+  # pages: !include layouts/480x320/all.yaml
+  bedroom: !include layouts/480x320/pages/bedroom.yaml
+  living_room: !include layouts/480x320/pages/living_room.yaml
+  lighting_1: !include layouts/480x320/pages/lighting_1.yaml
+  lighting_2: !include layouts/480x320/pages/lighting_2.yaml
+  lighting_3: !include layouts/480x320/pages/lighting_3.yaml
+  printers: !include layouts/480x320/pages/printers.yaml
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun

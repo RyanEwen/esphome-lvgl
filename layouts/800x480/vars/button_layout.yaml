@@ -1,0 +1,4 @@
+# 800x480: the grid the buttons sit in.
+<<: !include ../../styles/button_layout.yaml
+pad_column: 10
+pad_row: 10

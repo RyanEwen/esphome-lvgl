@@ -1,0 +1,142 @@
+# Living Room: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: living_room
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Living Room
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - button: # light 1
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: living_room_light_1
+                      entity_id: light.living_room_light_1
+                      text: Light 1
+                      <<: !include ../vars/button.yaml
+
+              - button: # light 2
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: living_room_light_2
+                      entity_id: light.living_room_light_2
+                      text: Light 2
+                      <<: !include ../vars/button.yaml
+
+              # - button: # dim scene
+              #     <<: !include
+              #       file: ../../widgets/buttons/text_buttons/stateless.yaml
+              #       vars:
+              #         uid: dim
+              #         text: Dim Lights
+              #         <<: !include ../vars/button.yaml
+              #     on_short_click:
+              #       - homeassistant.action:
+              #           action: homeassistant.turn_on
+              #           data: { entity_id: scene.living_room_lights_tv_watching }
+              #     on_long_press:
+              #       - homeassistant.action:
+              #           action: light.turn_on
+              #           data: { entity_id: light.all_living_room_lights, brightness_pct: '100' }
+
+              - button: # tv power
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/stateful.yaml
+                    vars:
+                      uid: living_room_tv
+                      icon_on: "\U000F0425"
+                      icon_off: "\U000F0425"
+                      text: TV
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: media_player.toggle
+                        data: { entity_id: media_player.living_room_tv }
+
+              - button: # tv power
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/stateful.yaml
+                    vars:
+                      uid: living_room_xbox
+                      icon_on: "\U000F0425"
+                      icon_off: "\U000F0425"
+                      text: Xbox
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: media_player.toggle
+                        data: { entity_id: media_player.ryan_s_xbox }
+
+              - button: # play / pause
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/stateless.yaml
+                    vars:
+                      uid: living_room_tv_playpause
+                      icon: "\U000F040E"
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: media_player.media_play_pause
+                        data: { entity_id: media_player.living_room_tv }
+
+              - button: # volume up
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/volume_buttons/vol_up.yaml
+                    vars:
+                      uid: living_room_tv_vol_up
+                      entity_id: media_player.living_room_tv
+                      <<: !include ../vars/button.yaml
+
+              - button: # stop
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/stateless.yaml
+                    vars:
+                      uid: living_room_tv_stop
+                      icon: "\U000F04DB"
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: media_player.media_stop
+                        data: { entity_id: media_player.living_room_tv }
+
+              - button: # volume down
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/volume_buttons/vol_down.yaml
+                    vars:
+                      uid: living_room_tv_vol_down
+                      entity_id: media_player.living_room_tv
+                      <<: !include ../vars/button.yaml
+
+packages:
+  living_room_light_1_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: living_room_light_1,
+    entity_id: light.living_room_light_1
+  }}
+
+  living_room_light_2_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: living_room_light_2,
+    entity_id: light.living_room_light_2
+  }}
+
+  living_room_tv_widget_sensors: !include { file: ../../widgets/buttons/icon_buttons/stateful_sensors.yaml, vars: {
+    uid: living_room_tv,
+    entity_id: media_player.living_room_tv
+  }}
+
+  living_room_xbox_widget_sensors: !include { file: ../../widgets/buttons/icon_buttons/stateful_sensors.yaml, vars: {
+    uid: living_room_xbox,
+    entity_id: media_player.ryan_s_xbox
+  }}
+
+  living_room_tv_extra_widgets_sensors: !include { file: ../../widgets/living_room_tv.sensor.yaml }
