@@ -1,0 +1,7 @@
+# 320x240: the container a page's widgets sit in.
+<<: !include ../../styles/container_styles.yaml
+pad_top: 0
+pad_bottom: 0
+pad_left: 4
+pad_right: 4
+scrollable: false # prevents scrollbars on pages where space is used up to the last pixel

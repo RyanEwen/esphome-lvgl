@@ -9,6 +9,11 @@ packages:
   common: !include common.yaml
   device: !include devices/ESP32-8048S050.yaml
   layout: !include layouts/800x480.yaml
+  # pages, in navigation order -- or every page at once:
+  # pages: !include layouts/800x480/all.yaml
+  lighting_1: !include layouts/800x480/pages/lighting_1.yaml
+  lighting_2: !include layouts/800x480/pages/lighting_2.yaml
+  printers: !include layouts/800x480/pages/printers.yaml
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun

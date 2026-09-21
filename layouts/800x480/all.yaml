@@ -1,0 +1,9 @@
+# Every 800x480 page, in navigation order. A top-level config can include this
+# in place of listing its pages one by one:
+#
+#   pages: !include layouts/800x480/all.yaml
+
+packages:
+  lighting_1: !include pages/lighting_1.yaml
+  lighting_2: !include pages/lighting_2.yaml
+  printers: !include pages/printers.yaml

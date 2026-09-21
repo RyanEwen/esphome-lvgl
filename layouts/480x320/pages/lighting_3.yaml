@@ -1,0 +1,60 @@
+# Outside Lighting: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: lighting_3
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Outside Lighting
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - button: # outdoor lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/widget.yaml
+                    vars:
+                      uid: all_outside_lights
+                      entity_id: light.all_outside_lights
+                      text: Outside Lights
+                      <<: !include ../vars/wide_button.yaml
+
+              - button: # door lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: outside_light_1
+                      entity_id: light.outside_light_1
+                      text: Door Lights
+                      <<: !include ../vars/button.yaml
+
+              - button: # deck lights
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: outside_light_2
+                      entity_id: light.outside_light_2
+                      text: Deck Lights
+                      <<: !include ../vars/button.yaml
+
+packages:
+  all_outside_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/sensors.yaml, vars: {
+    uid: all_outside_lights,
+    entity_id: light.all_outside_lights
+  }}
+
+  outside_light_1_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: outside_light_1,
+    entity_id: light.outside_light_1
+  }}
+
+  outside_light_2_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: outside_light_2,
+    entity_id: light.outside_light_2
+  }}

@@ -1,0 +1,8 @@
+# 480x320: an AMS row.
+ams_label_width: 30 # fits 'HT2' (30px at roboto_sm 16)
+ams_hum_width: 62 # heater 20 + 2 + '99' 18 + 2 + glyph 20
+ams_hum_value_width: 18 # fits '99'; keeps the heater icon in one place
+ams_strip_width: 175
+ams_tray_width: 40
+ams_tray_height: 20
+ams_tray_padding: 5

@@ -1,0 +1,126 @@
+# Bedroom: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: bedroom
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Bedroom
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - button: # ceiling light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: bedroom_light_1
+                      entity_id: light.bedroom_light_1
+                      text: Ceiling
+                      <<: !include ../vars/button.yaml
+
+              - button: # volume up
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/volume_buttons/vol_up.yaml
+                    vars:
+                      uid: bedroom_tv_vol_up
+                      entity_id: media_player.bedroom_android_tv
+                      <<: !include ../vars/button.yaml
+
+              - button: # rachel light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: bedroom_light_3
+                      entity_id: light.bedroom_light_3
+                      text: Rachel
+                      <<: !include ../vars/button.yaml
+
+              - button: # volume down
+                  <<: !include
+                    file: ../../widgets/buttons/icon_buttons/volume_buttons/vol_down.yaml
+                    vars:
+                      uid: bedroom_tv_vol_down
+                      entity_id: media_player.bedroom_android_tv
+                      <<: !include ../vars/button.yaml
+
+              - button: # ryan light
+                  <<: !include
+                    file: ../../widgets/buttons/icon_text_buttons/light_buttons/widget.yaml
+                    vars:
+                      uid: bedroom_light_2
+                      entity_id: light.bedroom_light_2
+                      text: Ryan
+                      <<: !include ../vars/button.yaml
+
+              - button: # play content
+                  <<: !include
+                    file: ../../widgets/buttons/text_buttons/stateless.yaml
+                    vars:
+                      uid: play_content_futurama
+                      text: Futurama
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: script.play_content_on_bedroom_chromecast
+                        data: { content: Futurama }
+                  on_long_press:
+                    - homeassistant.action:
+                        action: homeassistant.toggle
+                        data: { entity_id: media_player.bedroom_android_tv }
+
+              - button: # play content
+                  <<: !include
+                    file: ../../widgets/buttons/text_buttons/stateless.yaml
+                    vars:
+                      uid: play_content_adventure_time
+                      text: "Adventure\nTime"
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: script.play_content_on_bedroom_chromecast
+                        data: { content: Adventure Time }
+                  on_long_press:
+                    - homeassistant.action:
+                        action: homeassistant.toggle
+                        data: { entity_id: media_player.bedroom_android_tv }
+
+              - button: # play content
+                  <<: !include
+                    file: ../../widgets/buttons/text_buttons/stateless.yaml
+                    vars:
+                      uid: play_content_american_dad
+                      text: American Dad
+                      <<: !include ../vars/button.yaml
+                  on_short_click:
+                    - homeassistant.action:
+                        action: script.play_content_on_bedroom_chromecast
+                        data: { content: American Dad }
+                  on_long_press:
+                    - homeassistant.action:
+                        action: homeassistant.toggle
+                        data: { entity_id: media_player.bedroom_android_tv }
+
+packages:
+  bedroom_tv_widget_sensors: !include { file: ../../widgets/bedroom_tv.sensor.yaml }
+
+  bedroom_light_1_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: bedroom_light_1,
+    entity_id: light.bedroom_light_1
+  }}
+
+  bedroom_light_2_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: bedroom_light_2,
+    entity_id: light.bedroom_light_2
+  }}
+
+  bedroom_light_3_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
+    uid: bedroom_light_3,
+    entity_id: light.bedroom_light_3
+  }}

@@ -1,0 +1,6 @@
+# 800x480: the container a page's widgets sit in.
+<<: !include ../../styles/container_styles.yaml
+pad_top: 0
+pad_bottom: 0
+pad_left: 10
+pad_right: 10

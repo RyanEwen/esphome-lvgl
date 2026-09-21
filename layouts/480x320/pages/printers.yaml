@@ -1,0 +1,104 @@
+# Printers: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: printers
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Printers
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/printer_layout.yaml
+            widgets:
+              # These tiles use the compact format: the printer name and one
+              # AMS unit's four trays share a line. For a printer with more
+              # than one AMS, swap both halves of the pair --
+              # tile_combined.yaml -> tile.yaml here, and
+              # printer_combined.sensors.yaml -> printer.sensors.yaml below.
+              # That gives each unit its own row with a humidity readout, and
+              # the rows appear by themselves as units report, so the printer's
+              # topology does not have to be listed here.
+              - obj: # printer 1
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_1, name: 1 - Fred,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # printer 2
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_2, name: 2 - Wilma,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # printer 3
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_3, name: 3 - Barney,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # printer 4
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_4, name: 4 - Betty,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # printer 5
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_5, name: 5 - Dinno,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # printer 6
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_6, name: 6 - Pebbles,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+packages:
+  printer_1_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_1,
+    entity_id_prefix: p1s_1
+  }}
+
+  printer_2_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_2,
+    entity_id_prefix: p1s_2
+  }}
+
+  printer_3_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_3,
+    entity_id_prefix: p1s_3
+  }}
+
+  printer_4_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_4,
+    entity_id_prefix: p1s_4
+  }}
+
+  printer_5_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_5,
+    entity_id_prefix: p1s_5
+  }}
+
+  printer_6_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_6,
+    entity_id_prefix: p1s_6
+  }}
