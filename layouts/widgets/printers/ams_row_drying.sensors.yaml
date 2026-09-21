@@ -1,0 +1,32 @@
+# Heater indicator for one AMS unit.
+#
+# Include this only for a unit that actually has drying hardware: the heater
+# icon in the row is written from here and nowhere else, so a unit without it
+# leaves the slot blank and subscribes to no entity that does not exist. The
+# capability belongs to the AMS rather than to the printer, so if a unit moves
+# to another machine this package moves with it under the new prefix.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+
+binary_sensor:
+  - id: ${uid}_ams_${ams_id}_drying
+    platform: homeassistant
+    entity_id: binary_sensor.${entity_id_prefix}_ams_${ams_id}_drying
+    trigger_on_initial_state: true
+    on_state:
+      - if:
+          condition:
+            - binary_sensor.is_on: ${uid}_ams_${ams_id}_drying
+          then:
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_heater_icon
+                text: "\U000F1A45" # heat-wave
+                text_color: 0xFFD166
+          else:
+            - lvgl.label.update:
+                id: ${uid}_ams_${ams_id}_heater_icon
+                text: "\U000F1A45"
+                text_color: 0xC3C9D6 # present, not running -- a step below the humidity it annotates

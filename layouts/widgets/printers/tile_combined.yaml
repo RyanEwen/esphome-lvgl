@@ -1,0 +1,55 @@
+# The body of a printer tile in the combined single-AMS format: the printer
+# name and that unit's four tray pills share one line.
+#
+# This is upstream's original shape, kept as a per-printer choice. It costs one
+# line less than tile.yaml, which spends a line on the name and then a full row
+# per AMS unit -- worth it for a machine with a single AMS that is always there.
+#
+# Two things follow from sharing the line, and both are deliberate:
+#
+# - There is no per-unit title and no humidity column, so this tile pairs with
+#   printer_combined.sensors.yaml, which omits the humidity and drying packages.
+#   Including the stacked tile's sensors here would fail on the ids it cannot
+#   find (${uid}_ams_1_humidity_lbl, ${uid}_ams_1_heater_icon), which is the
+#   pairing check working as intended.
+# - The line is statically visible. It cannot reveal itself the way a stacked
+#   row does, because the reveal is driven by the humidity sensor and hiding the
+#   row would take the printer name with it. That is why this format only suits
+#   a printer whose one AMS is always present.
+#
+# Tray ids are unchanged (${uid}_ams_1_tray_N_*), so ams_row.sensors.yaml drives
+# these pills exactly as it drives a stacked row's.
+#
+# required vars:
+# - uid
+# - name
+# - bar_height
+# - ams_strip_width
+# - ams_tray_width
+# - ams_tray_height
+# - ams_tray_padding
+
+# widgets:
+- obj: # name and AMS 1's pills on one line
+    layout:
+      type: FLEX
+      flex_flow: ROW
+      flex_align_main: SPACE_BETWEEN
+      flex_align_cross: CENTER
+    width: 100%
+    height: SIZE_CONTENT
+    pad_all: 0
+    border_width: 0
+    bg_opa: 0
+    widgets:
+      - label: # printer name
+          width: SIZE_CONTENT
+          height: SIZE_CONTENT
+          text: "${name}"
+      - obj: # fixed-width pill strip, same geometry as a stacked row's
+          <<: !include { file: ams_tray_strip.yaml, vars: { ams_id: "1" } }
+
+- obj: # status / times
+    <<: !include tile_status.yaml
+- bar: # print progress
+    <<: !include tile_progress.yaml
