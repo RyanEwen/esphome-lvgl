@@ -1,0 +1,42 @@
+# Brightness ceiling from the room's light, for panels that have a sensor.
+# Pair with features/idle/idle.yaml, and list it after it.
+#
+# Needs from the device file: a sensor with id `ambient_light` reporting lux,
+# with whatever filtering and calibration that board's part needs. It uses the
+# same bands as sun.yaml, and the same "only a change of band re-applies" rule,
+# so a flickering reading near a threshold cannot hammer the backlight -- give
+# the sensor a sliding-window filter if it is noisy.
+
+substitutions:
+  ambient_dusk_lux: "50" # below this: the dusk band
+  ambient_night_lux: "5" # below this: the night band
+  ambient_day_percent: "100"
+  ambient_dusk_percent: "60"
+  ambient_night_percent: "35"
+
+globals:
+  - id: ambient_band # 2 day, 1 dusk, 0 night
+    type: int
+    restore_value: false
+    initial_value: '2'
+
+sensor:
+  - id: !extend ambient_light
+    on_value:
+      - lambda: |-
+          if (std::isnan(x)) {
+            return;
+          }
+          int band = x >= ${ambient_dusk_lux} ? 2 : (x >= ${ambient_night_lux} ? 1 : 0);
+          if (band == id(ambient_band)) {
+            return;
+          }
+          id(ambient_band) = band;
+          id(ambient_night) = band == 0;
+          id(active_brightness) = (band == 2 ? ${ambient_day_percent} : band == 1 ? ${ambient_dusk_percent} : ${ambient_night_percent}) / 100.0f;
+          if (id(backlight).current_values.is_on() &&
+              id(backlight).current_values.get_brightness() > id(active_brightness) * 0.5f) {
+            auto call = id(backlight).turn_on();
+            call.set_brightness(id(active_brightness));
+            call.perform();
+          }

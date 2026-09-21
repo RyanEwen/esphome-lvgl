@@ -43,10 +43,11 @@ display:
       height: ${sdl_height}
 
 touchscreen:
-  platform: sdl
-  transform:
-    mirror_x: false
-    mirror_y: false
+  - id: main_touchscreen
+    platform: sdl
+    transform:
+      mirror_x: false
+      mirror_y: false
   # on_touch:
   #   - logger.log:
   #         format: Touch at (%d, %d)

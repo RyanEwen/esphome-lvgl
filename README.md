@@ -10,6 +10,11 @@
 * Elecrow CrowPanel `DIS05035H` (v2.2) 3.5" 320x480 portrait, with resistive touch and USB-C. [Manufacturer's Link](https://www.elecrow.com/esp32-display-3-5-inch-hmi-display-spi-tft-lcd-touch-screen.html).
 
 ## Changelog
+### 2026-09-21
+* Add `features/`, for behaviour a panel may or may not want, opted into from the top-level config. Device files stay hardware only and layouts stay pages only. See "Optional features".
+* Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
+* `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
+* The boot screen is dark rather than white, so a reboot at night does not light the room.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -49,6 +54,33 @@ Aside from the Packages feature used to separate device-specfic YAML from common
 ## Required Setup in Home Assistant
 Don't forget to Configure your ESPHome Devices in Home Assistant, to allow them to perform actions:
 ![Allow device to perform Home Assistant actions](https://github.com/user-attachments/assets/ca5c3cb4-a4fd-44ea-a5f6-159ccd6401df)
+
+## Optional Features
+Behaviour that not every panel wants lives in `features/` and is opted into from the top-level config. List features **after** `layout:`:
+
+```yaml
+packages:
+  common: !include common.yaml
+  device: !include devices/JC3248W535.yaml
+  layout: !include layouts/480x320.yaml
+  idle: !include features/idle/idle.yaml
+  ceiling: !include features/idle/sun.yaml
+```
+
+Each setting is a Home Assistant control whose starting value comes from a substitution, so the YAML sets the default and Home Assistant can change a running panel without a reflash. To change a default, set the substitution in the top-level config:
+
+```yaml
+substitutions:
+  idle_sleep_minutes: "60"
+```
+
+A feature relies on stable ids from the device file (`backlight`, `main_touchscreen`) and the layout (`go_home`, `home_btn`), which every file here already provides.
+
+### `features/idle/idle.yaml`
+Dims the backlight, returns to the home page, and sleeps after the panel has been left alone; a touch wakes it. Controls: **Dim after**, **Dim level**, **Go home after**, **Sleep after** (minutes; 0 means never), a **Sleep now** button, and **Sleep last event**. Holding the footer's home button for 1.5 seconds also sleeps. The tap that wakes a dark panel is swallowed rather than pressing whatever it landed on.
+
+### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
+The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
 
 ## How-tos
 ### How to specify the home page on a particular device
