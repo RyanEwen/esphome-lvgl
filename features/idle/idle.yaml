@@ -1,0 +1,219 @@
+# Idle behaviour for the backlight: dim, go home, and sleep after a while
+# untouched, and wake on the next touch. Opt in from a top-level config, after
+# `layout:` (see "Optional features" in the README):
+#
+#   packages:
+#     ...
+#     idle: !include features/idle/idle.yaml
+#     ceiling: !include features/idle/sun.yaml   # optional
+#
+# Needs from the device file: a `backlight` light and a `main_touchscreen`
+# (list form). Needs from the layout: `go_home`, `ha_time` and the footer's
+# `home_btn`.
+#
+# Each timeout and the dim level is a Home Assistant number whose first value
+# comes from the substitutions below; override them in the top-level config to
+# change the default, and in HA to change a running panel. 0 minutes = never.
+
+substitutions:
+  idle_dim_minutes: "5"
+  idle_dim_percent: "25"
+  idle_home_minutes: "20"
+  idle_sleep_minutes: "30"
+
+globals:
+  - id: active_brightness # the ceiling everything dims relative to; set by a ceiling feature
+    type: float
+    restore_value: false
+    initial_value: '1.0'
+  - id: ambient_night # set by a ceiling feature; read by features that change at night
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: idle_hold_page # set while a feature's page must survive the go-home timer
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  # A feature that sleeps differently -- say, a clock instead of a dark screen --
+  # registers here; returning false falls back to going dark. It lets such a
+  # feature take over without this one knowing it exists.
+  - id: sleep_handler
+    type: std::function<bool(const std::string &)>
+    restore_value: false
+
+number:
+  - id: idle_dim_minutes
+    platform: template
+    name: Dim after
+    icon: mdi:brightness-6
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    min_value: 0
+    max_value: 240
+    step: 1
+    initial_value: ${idle_dim_minutes}
+    optimistic: true
+    restore_value: true
+  - id: idle_dim_percent
+    platform: template
+    name: Dim level
+    icon: mdi:brightness-5
+    entity_category: config
+    unit_of_measurement: "%"
+    mode: slider
+    min_value: 1
+    max_value: 100
+    step: 1
+    initial_value: ${idle_dim_percent}
+    optimistic: true
+    restore_value: true
+  - id: idle_home_minutes
+    platform: template
+    name: Go home after
+    icon: mdi:home-clock
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    min_value: 0
+    max_value: 240
+    step: 1
+    initial_value: ${idle_home_minutes}
+    optimistic: true
+    restore_value: true
+  - id: idle_sleep_minutes
+    platform: template
+    name: Sleep after
+    icon: mdi:sleep
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    min_value: 0
+    max_value: 240
+    step: 1
+    initial_value: ${idle_sleep_minutes}
+    optimistic: true
+    restore_value: true
+
+button:
+  - id: sleep_now_button
+    platform: template
+    name: Sleep now
+    icon: mdi:sleep
+    on_press:
+      - script.execute: { id: sleep_now, reason: HA }
+
+# What last put the panel to sleep or woke it, and when. After a reboot it reads
+# unknown, which is itself the tell.
+text_sensor:
+  - id: sleep_last_event
+    platform: template
+    name: Sleep last event
+    icon: mdi:sleep
+    entity_category: diagnostic
+
+touchscreen:
+  - id: !extend main_touchscreen
+    on_touch:
+      # wakes the panel; lvgl.pause with resume_on_input swallows this touch, so
+      # the tap that wakes a dark screen never actuates whatever it landed on
+      - light.turn_on:
+          id: backlight
+          brightness: !lambda return id(active_brightness);
+
+esphome:
+  includes:
+    - idle.h # idle_ms()
+  on_boot:
+    priority: -100 # after LVGL has built home_btn
+    then:
+      # Holding Home for 1.5s sleeps. Attached here rather than in
+      # footer/widget.yaml, which every layout shares whether or not it idles.
+      # home_btn's own on_press (go home) still fires at touch-down.
+      - lambda: |-
+          auto cb = [](lv_event_t *e) {
+            if (lv_event_get_code(e) == LV_EVENT_PRESSED) {
+              id(sleep_hold).execute();
+            } else {  // RELEASED or PRESS_LOST: let go before the hold completed
+              id(sleep_hold).stop();
+            }
+          };
+          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESSED, nullptr);
+          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_RELEASED, nullptr);
+          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESS_LOST, nullptr);
+
+script:
+  - id: sleep_note # publishes "<event> HH:MM" to sleep_last_event
+    parameters:
+      event: std::string
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          id(sleep_last_event).publish_state(now.is_valid() ? event + now.strftime(" %H:%M") : event);
+
+  # Going dark. Waits for the finger to lift before pausing: resume_on_input
+  # wakes on a release, so a pause under a held finger would undo itself, and
+  # the next tap would land on a live screen instead of being swallowed.
+  - id: display_sleep
+    then:
+      - light.turn_off: backlight
+      - wait_until:
+          condition:
+            - lambda: return id(main_touchscreen)->get_touches().empty();
+      - lvgl.pause:
+          show_snow: false
+
+  - id: sleep_now
+    parameters:
+      reason: std::string # idle / hold / HA
+    then:
+      - if:
+          condition:
+            - lambda: return !(id(sleep_handler) && id(sleep_handler)(reason));
+          then:
+            - script.execute: { id: sleep_note, event: !lambda 'return "dark (" + reason + ")";' }
+            - script.execute: display_sleep
+
+  - id: sleep_hold
+    mode: restart
+    then:
+      - delay: 1500ms # well clear of the 400ms long press the tiles use
+      - script.execute: { id: sleep_now, reason: hold }
+      # the finger is still down: drop the rest of this touch so its release
+      # lands on nothing
+      - lambda: |-
+          for (lv_indev_t *i = lv_indev_get_next(nullptr); i != nullptr; i = lv_indev_get_next(i)) {
+            lv_indev_wait_release(i);
+          }
+
+lvgl:
+  on_idle:
+    - timeout: !lambda return idle_ms(id(idle_dim_minutes).state);
+      then:
+        # dimming never raises the backlight, so something already lower --
+        # put up by hand before this fired, say -- stays put
+        - if:
+            condition:
+              - lambda: |-
+                  float target = id(active_brightness) * id(idle_dim_percent).state / 100.0f;
+                  return id(backlight).current_values.is_on() &&
+                         id(backlight).current_values.get_brightness() > target;
+            then:
+              - light.turn_on:
+                  id: backlight
+                  brightness: !lambda return id(active_brightness) * id(idle_dim_percent).state / 100.0f;
+    # Come back on the home page rather than whatever was left open. Skipped
+    # while paused, so it can share a timeout with the sleep below without a
+    # page change racing lvgl.pause, and skipped while a feature holds its page.
+    - timeout: !lambda return idle_ms(id(idle_home_minutes).state);
+      then:
+        - if:
+            condition:
+              - lambda: return !id(idle_hold_page);
+              - not:
+                  - lvgl.is_paused:
+            then:
+              - script.execute: go_home
+    - timeout: !lambda return idle_ms(id(idle_sleep_minutes).state);
+      then:
+        - script.execute: { id: sleep_now, reason: idle }

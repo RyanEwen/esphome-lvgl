@@ -9,3 +9,6 @@ packages:
   common: !include common.yaml
   device: !include devices/ESP32-2432S028R.yaml
   layout: !include layouts/320x240.yaml
+  # optional features -- list them after layout:
+  # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
+  # ceiling: !include features/idle/sun.yaml     # brightness follows the sun

@@ -1,0 +1,47 @@
+# Brightness ceiling from the sun, for panels with no light sensor. Pair with
+# features/idle/idle.yaml, and list it after it.
+#
+# Needs Home Assistant's sun integration (sun.sun). Everything else on the
+# panel is already useless without HA, and a stale elevation only matters if HA
+# stays down across a sunset. Until the first reading the ceiling is 100%, so a
+# cold boot without HA is bright rather than dark.
+#
+# Bands rather than a curve: a brightness call on every elevation update would
+# be a write every minute or two for a change nobody can see.
+
+substitutions:
+  sun_day_percent: "100"
+  sun_dusk_percent: "60"
+  sun_night_percent: "35"
+
+globals:
+  - id: sun_band # 2 day, 1 dusk (sun within 6 degrees of the horizon), 0 night
+    type: int
+    restore_value: false
+    initial_value: '2'
+
+sensor:
+  - id: sun_elevation
+    platform: homeassistant
+    entity_id: sun.sun
+    attribute: elevation
+    on_value:
+      - lambda: |-
+          if (std::isnan(x)) {  // unavailable: NAN would read as night at noon
+            return;
+          }
+          int band = x > 6.0f ? 2 : (x > -6.0f ? 1 : 0);
+          if (band == id(sun_band)) {
+            return;  // only a change of band re-applies brightness
+          }
+          id(sun_band) = band;
+          id(ambient_night) = band == 0;
+          id(active_brightness) = (band == 2 ? ${sun_day_percent} : band == 1 ? ${sun_dusk_percent} : ${sun_night_percent}) / 100.0f;
+          // follow the change only while the panel is awake; if it is dimmed
+          // or dark, the next touch picks up the new ceiling
+          if (id(backlight).current_values.is_on() &&
+              id(backlight).current_values.get_brightness() > id(active_brightness) * 0.5f) {
+            auto call = id(backlight).turn_on();
+            call.set_brightness(id(active_brightness));
+            call.perform();
+          }
