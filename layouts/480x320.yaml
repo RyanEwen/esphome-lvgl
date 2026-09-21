@@ -1,4 +1,6 @@
 esphome:
+  includes:
+    - widgets/printers/tray_color.h # tray::bg / tray::ink, shared by every tray pill
   # Go home once everything is set up, rather than from splash's on_load: a
   # page.show inside the first page's own load event is dropped, and splash is
   # only the first page while no package adds one ahead of it.

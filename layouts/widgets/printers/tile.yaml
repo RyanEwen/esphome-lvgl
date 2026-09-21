@@ -1,0 +1,61 @@
+# The body of one printer tile: name, all twelve AMS slots, status and progress.
+#
+# This is the `widgets:` list of a tile, not a widget itself -- the caller
+# supplies the tile's own obj and layout and hands this file to `widgets:`.
+#
+# Every printer carries all twelve slots: units 1-4 and the AMS HTs at 128/129.
+# Each row starts hidden and is revealed by its own humidity sensor, so a slot
+# whose entities do not exist never appears and a unit moved between printers
+# shows up on the new one without a reflash. Rows never hide again -- a unit
+# that goes away leaves its row until the panel restarts.
+#
+# There used to be no file like this because a tile would have had to hardcode
+# a unit count and fork for every combination. Carrying all twelve slots on
+# every printer is what retired that objection: the topology is discovered at
+# runtime, so one body now fits every machine.
+#
+# The row includes name no vars of their own beyond the slot -- an include
+# inherits the vars of the file that included it, so uid and the ams_* sizing
+# numbers reach them from the layout.
+#
+# required vars:
+# - uid
+# - name
+# - bar_height
+# - ams_label_width
+# - ams_hum_width
+# - ams_hum_value_width
+# - ams_strip_width
+# - ams_tray_width
+# - ams_tray_height
+# - ams_tray_padding
+
+# widgets:
+- label: # printer name
+    width: 100%
+    height: SIZE_CONTENT
+    text: "${name}"
+
+- obj: # AMS 1 -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row.yaml, vars: { ams_id: "1", label: "1" } }
+- obj: # AMS 2 -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row.yaml, vars: { ams_id: "2", label: "2" } }
+- obj: # AMS 3 -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row.yaml, vars: { ams_id: "3", label: "3" } }
+- obj: # AMS 4 -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row.yaml, vars: { ams_id: "4", label: "4" } }
+- obj: # AMS HT -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row_single.yaml, vars: { ams_id: "128", label: "HT" } }
+- obj: # AMS HT2 -- hidden until this unit reports humidity
+    hidden: true
+    <<: !include { file: ams_row_single.yaml, vars: { ams_id: "129", label: "HT2" } }
+
+- obj: # status / times
+    <<: !include tile_status.yaml
+- bar: # print progress
+    <<: !include tile_progress.yaml

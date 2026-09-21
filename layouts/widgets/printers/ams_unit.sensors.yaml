@@ -1,0 +1,24 @@
+# Every sensor package one AMS unit needs: trays, humidity and drying.
+#
+# `variant` selects the tray file by name -- "" for a 4-tray unit, "_single"
+# for a 1-tray AMS HT. ESPHome substitutes into an include's filename, so the
+# two topologies share this one call site instead of forking the caller.
+#
+# Drying is subscribed unconditionally: a unit with no heater has no _drying
+# entity, so its heater icon stays blank on its own rather than because a
+# package was left out. The capability is discovered, not declared.
+#
+# The nested includes below name no vars of their own -- an include inherits
+# the vars of the file that included it, so uid / entity_id_prefix / ams_id
+# reach them from whoever included this file.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+# - variant           # "" or "_single"
+
+packages:
+  trays: !include ams_row${variant}.sensors.yaml
+  humidity: !include ams_row_humidity.sensors.yaml
+  drying: !include ams_row_drying.sensors.yaml

@@ -1,0 +1,94 @@
+# One AMS unit as a row: title, heater, humidity and 4 tray pills.
+#
+# required vars:
+# - uid
+# - ams_id
+# - label
+# - ams_label_width
+# - ams_hum_width
+# - ams_hum_value_width
+# - ams_strip_width
+# - ams_tray_width
+# - ams_tray_height
+# - ams_tray_padding
+
+# - obj:
+  id: ${uid}_ams_${ams_id}_row
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: END
+    flex_align_cross: CENTER
+    pad_column: ${ams_tray_padding}
+  width: 100%
+  height: SIZE_CONTENT
+  pad_all: 0
+  border_width: 0
+  bg_opa: 0
+  widgets:
+    - obj: # unit title, left justified
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: START
+          flex_align_cross: CENTER
+        width: ${ams_label_width}
+        height: SIZE_CONTENT
+        pad_all: 0
+        border_width: 0
+        bg_opa: 0
+        widgets:
+          - label:
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: ${label}
+              text_color: 0xD8DCE6
+    - obj: # humidity value + glyph, right justified and tight together
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: END
+          flex_align_cross: CENTER
+          pad_column: 2
+        width: ${ams_hum_width}
+        height: SIZE_CONTENT
+        pad_all: 0
+        border_width: 0
+        bg_opa: 0
+        widgets:
+          - label: # written only by ams_row_drying.sensors.yaml, so a unit with no
+                   # drying hardware omits that package and this stays empty
+              id: ${uid}_ams_${ams_id}_heater_icon
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: ""
+              text_font: mdi_sm
+              text_color: 0xC3C9D6
+          - obj: # fixed width, or a single-digit humidity drags the heater icon
+                 # sideways and the icons stop lining up down the rows
+              width: ${ams_hum_value_width}
+              height: SIZE_CONTENT
+              pad_all: 0
+              border_width: 0
+              bg_opa: 0
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                flex_align_main: END
+                flex_align_cross: CENTER
+              widgets:
+                - label:
+                    id: ${uid}_ams_${ams_id}_humidity_lbl
+                    width: SIZE_CONTENT
+                    height: SIZE_CONTENT
+                    text: ""
+                    text_color: 0xD8DCE6
+          - label:
+              id: ${uid}_ams_${ams_id}_humidity_icon
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              text: "\U000F058E"
+              text_font: mdi_sm
+              text_color: 0xD8DCE6
+    - obj: # fixed-width pill strip -- keeps columns aligned across rows
+        <<: !include ams_tray_strip.yaml

@@ -1,0 +1,82 @@
+# The four tray pills of one AMS unit, as a fixed-width strip.
+#
+# The width is fixed (4 * ams_tray_width + 3 * ams_tray_padding) with the pills
+# left-aligned inside, which is what makes a 1-pill AMS HT row sit under pill 1
+# of the rows above rather than drifting to the right edge.
+#
+# Shared by ams_row.yaml (stacked rows) and tile_combined.yaml (name and pills
+# on one line), so the pill geometry is written once.
+#
+# required vars:
+# - uid
+# - ams_id
+# - ams_strip_width
+# - ams_tray_width
+# - ams_tray_height
+# - ams_tray_padding
+
+# - obj:
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: START
+    flex_align_cross: CENTER
+    pad_column: ${ams_tray_padding}
+  width: ${ams_strip_width}
+  height: SIZE_CONTENT
+  pad_all: 0
+  border_width: 0
+  bg_opa: 0
+  widgets:
+  - obj:
+      id: ${uid}_ams_${ams_id}_tray_1_obj
+      width: ${ams_tray_width}
+      height: ${ams_tray_height}
+      radius: ${ams_tray_height}
+      border_width: 0
+      scrollable: false
+      text_color: 0xCCCCCC
+      widgets:
+        - label:
+            id: ${uid}_ams_${ams_id}_tray_1_remaining_lbl
+            align: CENTER
+            text: "..."
+  - obj:
+      id: ${uid}_ams_${ams_id}_tray_2_obj
+      width: ${ams_tray_width}
+      height: ${ams_tray_height}
+      radius: ${ams_tray_height}
+      border_width: 0
+      scrollable: false
+      text_color: 0xCCCCCC
+      widgets:
+        - label:
+            id: ${uid}_ams_${ams_id}_tray_2_remaining_lbl
+            align: CENTER
+            text: "..."
+  - obj:
+      id: ${uid}_ams_${ams_id}_tray_3_obj
+      width: ${ams_tray_width}
+      height: ${ams_tray_height}
+      radius: ${ams_tray_height}
+      border_width: 0
+      scrollable: false
+      text_color: 0xCCCCCC
+      widgets:
+        - label:
+            id: ${uid}_ams_${ams_id}_tray_3_remaining_lbl
+            align: CENTER
+            text: "..."
+  - obj:
+      id: ${uid}_ams_${ams_id}_tray_4_obj
+      width: ${ams_tray_width}
+      height: ${ams_tray_height}
+      radius: ${ams_tray_height}
+      border_width: 0
+      scrollable: false
+      text_color: 0xCCCCCC
+      widgets:
+        - label:
+            id: ${uid}_ams_${ams_id}_tray_4_remaining_lbl
+            align: CENTER
+            text: "..."

@@ -17,6 +17,9 @@
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
 * `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
 * The boot screen is dark rather than white, so a reboot at night does not light the room.
+* [Breaking change] `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced. A page that included them switches the tile body to `widgets/printers/tile_combined.yaml` and its sensors to `widgets/printers/printer_combined.sensors.yaml`; the printers page in each layout shows the shape. The tile looks the same as before.
+* A printer tile can instead use `widgets/printers/tile.yaml` with `printer.sensors.yaml`: one row per AMS unit, with humidity and a heater icon, and rows that appear and disappear with the hardware. See "How to show every AMS unit".
+* Tray text takes its colour from the filament, so a white or black spool stays readable. An idle or offline printer shows an empty grey bar rather than the last job's full one.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -138,6 +141,34 @@ lvgl:
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.
 
+### How to show every AMS unit
+The demo tiles use `tile_combined.yaml`, which puts the printer name and one AMS unit's four trays on a single line. To show all of a printer's units instead, switch that tile's body to `tile.yaml` in `layouts/<WxH>/pages/printers.yaml`:
+
+```yaml
+- obj: # printer 1
+    <<: !include ../vars/printer_tile.yaml
+    layout:
+      <<: !include ../vars/printer_tile_layout.yaml
+    widgets: !include { file: ../../widgets/printers/tile.yaml, vars: {
+      uid: printer_1, name: 1 - Fred,
+      <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+```
+
+and its sensor package, in the same file, to `printer.sensors.yaml`:
+
+```yaml
+printer_1_sensors: !include { file: ../../widgets/printers/printer.sensors.yaml, vars: {
+  uid: printer_1,
+  entity_id_prefix: p1s_1
+}}
+```
+
+Change both halves together; a mismatched pair fails at config time on the ids the wrong half cannot find. The two formats can sit side by side on one page.
+
+`tile.yaml` carries all twelve slots a printer can have (AMS units `1` to `4`, AMS HTs `128` and `129`), each hidden until its unit reports humidity. Every AMS reports humidity, so that doubles as "this unit is here". A slot whose entities do not exist never sends anything and stays hidden. A unit that stops reporting hides again, and moving an AMS to another printer needs no reflash. The heater icon is discovered the same way: a unit with no drying hardware has no `_drying` entity, so its icon stays blank.
+
+The cost is the slots you do not use: on a Guition `JC3248W535`, going from 4 enumerated rows to 12 slots across two printers took RAM from 41.2% to 44.0% and flash from 18.7% to 19.3%. Empty slots are silent at boot, since Home Assistant sends nothing for an entity that does not exist.
+
 ## Todo
 This readme isn't finished. I'll be elaborating on some more techniques being used in here, such as the modularization of the widgets using `!include` and how the stateful widget files relate to their sensor counterparts (tip, just make sure to pass the same `uid` and `entity_id` when including a widget and when including the related widget sensor).
 
@@ -150,7 +181,7 @@ These look better in real life, I promise! I took these photos in low-light and 
 
 3.5" 320x480 portrait (Guition JC3248W535)  
 ![Lighting Page](media/guition_3.5_lighting.jpg "Lighting Page")
-![Printers Page](media/guition_3.5_printers.jpg "Printers Page")  
+![Printers Page](media/guition_3.5_printers_ams.jpg "Printers Page")  
 
 3.5" 320x480 portrait (Elecrow DIS05035H)  
 ![Lighting Page](media/elecrow_3.5_lighting.jpg "Lighting Page")
