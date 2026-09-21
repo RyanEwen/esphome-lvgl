@@ -1,9 +1,3 @@
-# Needs two glyphs that are not in the default subset -- add them to
-# layouts/fonts/glyphs.yaml before using this tile, or the shield renders as a
-# missing-glyph box:
-#   - "\U000F068A" # shield-home
-#   - "\U000F099D" # shield-lock
-#
 # required vars:
 # - uid
 # - width
