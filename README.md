@@ -11,6 +11,7 @@
 
 ## Changelog
 ### 2026-09-21
+* [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
 * Add `features/`, for behaviour a panel may or may not want, opted into from the top-level config. Device files stay hardware only and layouts stay pages only. See "Optional features".
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
@@ -49,8 +50,16 @@ If all you are looking for is a device-specific config then look no further than
 
 The YAML files in the root of this repo demonstrate how to use each device's config file with a common config, as well as a resolution-specific (but not device-specific) LVGL config/layout. 
 
+Each layout is split by resolution:
+* `layouts/<WxH>.yaml` - fonts, theme, the header, footer and boot screen, and `go_home`. No pages of its own.
+* `layouts/<WxH>/pages/<page>.yaml` - one page and the sensors its tiles need, as a package. The top-level config lists the ones it wants, after `layout:`, in navigation order.
+* `layouts/<WxH>/all.yaml` - every page for that resolution, for a config that wants them all.
+* `layouts/<WxH>/vars/` - the sizing the pages share (page padding, button sizes, and so on).
+
 ## Advanced YAML Techniques
 Aside from the Packages feature used to separate device-specfic YAML from common YAML config, there are some other potentially unfamiliar techniques in use here. For example, the files within `layouts/` use [YAML anchors and aliases](https://ref.coddy.tech/yaml/yaml-anchors) which help reduce code duplication. I use anchors and aliases instead of `style_definitions` and `styles` as anchors can be used on anything instead of being restricted to just styles, and because they override `theme` settings when used (there is a bug or perhaps odd design choice that prevent `styles` from overriding `theme`). I define most of my anchors within a made-up section called `.sizing` because top-level sections prefixed with a period do not cause errors when parsed by ESPHome. 
+
+Anchors don't reach across files, though, so the page files can't use the layout's. The sizing they share lives in small files under `layouts/<WxH>/vars/` instead, merged the same way an anchor was: `<<: !include ../vars/page.yaml` in place of `<<: *page_styles`.
 
 ## Required Setup in Home Assistant
 Don't forget to Configure your ESPHome Devices in Home Assistant, to allow them to perform actions:
@@ -64,6 +73,7 @@ packages:
   common: !include common.yaml
   device: !include devices/JC3248W535.yaml
   layout: !include layouts/480x320.yaml
+  pages: !include layouts/480x320/all.yaml
   idle: !include features/idle/idle.yaml
   ceiling: !include features/idle/sun.yaml
 ```
@@ -84,8 +94,26 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
 
 ## How-tos
+### How to choose which pages a device shows
+List the pages after `layout:` in the device's config file. They appear in the order they are listed, so reordering the lines reorders the navigation, and leaving a line out leaves that page off the device:
+```yaml
+packages:
+  common: !include common.yaml
+  device: !include devices/JC3248W535.yaml
+  layout: !include layouts/480x320.yaml
+  lighting_1: !include layouts/480x320/pages/lighting_1.yaml
+  printers: !include layouts/480x320/pages/printers.yaml
+```
+
+To get every page for the resolution, in its usual order, include `all.yaml` in place of the list:
+```yaml
+  pages: !include layouts/480x320/all.yaml
+```
+
+The examples list their pages, with the `all.yaml` line commented out above the list.
+
 ### How to specify the home page on a particular device
-To change which page loads at boot time and when the home button is pressed on a particular device, adjust the `home_page` variable in the device's config file to the ID of the desired page. 
+To change which page loads at boot time and when the home button is pressed on a particular device, adjust the `home_page` variable in the device's config file to the ID of the desired page. The page has to be one the config includes.
 
 For example, to set a page with the ID `printers`, adjust this in your device's config file:
 ```yaml
@@ -95,7 +123,9 @@ substitutions:
 ```
 
 ### How to hide pages on particular devices
-To hide a page on a particular device, extend the desired `page` definition by adding `skip: true` using `!extend` (see [Packages](https://esphome.io/components/packages.html) feature). 
+The simplest way is to leave the page out of the device's page list (see "How to choose which pages a device shows").
+
+To keep a page on the device but leave it out of the next/previous navigation, extend the desired `page` definition by adding `skip: true` using `!extend` (see [Packages](https://esphome.io/components/packages.html) feature). 
 
 For example, to hide a page with the ID `bedroom`, add this to your device's config file:
 ```yaml

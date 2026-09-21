@@ -1,0 +1,96 @@
+# Printers: the page and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+
+lvgl:
+  pages:
+    - id: printers
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Printers
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/printer_layout.yaml
+            widgets:
+              - obj: # printer 1
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_1
+                      name: 1 - Fred
+                      <<: !include ../vars/printer.yaml
+
+              - obj: # printer 2
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_2
+                      name: 2 - Wilma
+                      <<: !include ../vars/printer.yaml
+
+              - obj: # printer 3
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_3
+                      name: 3 - Barney
+                      <<: !include ../vars/printer.yaml
+
+              - obj: # printer 4
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_4
+                      name: 4 - Betty
+                      <<: !include ../vars/printer.yaml
+
+              - obj: # printer 5
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_5
+                      name: 5 - Dinno
+                      <<: !include ../vars/printer.yaml
+
+              - obj: # printer 6
+                  <<: !include
+                    file: ../../widgets/printers/widget.yaml
+                    vars:
+                      uid: printer_6
+                      name: 6 - Pebbles
+                      <<: !include ../vars/printer.yaml
+
+packages:
+  printer_1_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_1,
+    entity_id_prefix: p1s_1
+  }}
+
+  printer_2_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_2,
+    entity_id_prefix: p1s_2
+  }}
+
+  printer_3_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_3,
+    entity_id_prefix: p1s_3
+  }}
+
+  printer_4_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_4,
+    entity_id_prefix: p1s_4
+  }}
+
+  printer_5_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_5,
+    entity_id_prefix: p1s_5
+  }}
+
+  printer_6_widget_sensors: !include { file: ../../widgets/printers/sensors.yaml, vars: {
+    uid: printer_6,
+    entity_id_prefix: p1s_6
+  }}
