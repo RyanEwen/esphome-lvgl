@@ -42,7 +42,7 @@
               width: SIZE_CONTENT
               height: SIZE_CONTENT
               text: ${label}
-              text_color: 0x9AA0AE
+              text_color: 0xD8DCE6
     - obj: # humidity value + glyph, right justified and tight together
         layout:
           type: FLEX
@@ -63,7 +63,7 @@
               height: SIZE_CONTENT
               text: ""
               text_font: mdi_sm
-              text_color: 0x9AA0AE
+              text_color: 0xC3C9D6
           - obj: # fixed width, or a single-digit humidity drags the heater icon
                  # sideways and the icons stop lining up down the rows
               width: ${ams_hum_value_width}
@@ -82,14 +82,14 @@
                     width: SIZE_CONTENT
                     height: SIZE_CONTENT
                     text: ""
-                    text_color: 0x9AA0AE
+                    text_color: 0xD8DCE6
           - label:
               id: ${uid}_ams_${ams_id}_humidity_icon
               width: SIZE_CONTENT
               height: SIZE_CONTENT
               text: "\U000F058E"
               text_font: mdi_sm
-              text_color: 0x9AA0AE
+              text_color: 0xD8DCE6
     - obj: # fixed-width pill strip -- keeps columns aligned across rows
         layout:
           type: FLEX

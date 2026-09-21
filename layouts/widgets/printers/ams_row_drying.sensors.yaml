@@ -24,9 +24,9 @@ binary_sensor:
             - lvgl.label.update:
                 id: ${uid}_ams_${ams_id}_heater_icon
                 text: "\U000F1A45" # heat-wave
-                text_color: 0xFFAF00
+                text_color: 0xFFD166
           else:
             - lvgl.label.update:
                 id: ${uid}_ams_${ams_id}_heater_icon
                 text: "\U000F1A45"
-                text_color: 0x9AA0AE # present, not running -- same grey as the humidity
+                text_color: 0xC3C9D6 # present, not running -- a step below the humidity it annotates

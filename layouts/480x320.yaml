@@ -62,7 +62,7 @@ font: !include
     bar_height: 4
 
   - &ams_row_vars
-    ams_label_width: 24
+    ams_label_width: 30 # fits 'HT2' (30px at roboto_sm 16)
     ams_hum_width: 62 # heater 20 + 2 + '99' 18 + 2 + glyph 20
     ams_hum_value_width: 18 # fits '99'; keeps the heater icon in one place
     ams_strip_width: 175
