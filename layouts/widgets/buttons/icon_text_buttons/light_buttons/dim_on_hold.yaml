@@ -1,0 +1,21 @@
+# The light button, plus a long press that turns the light on at 1% -- say,
+# for a bedside lamp. Opt-in because a long press is easy to hit by accident on
+# a wall panel, and on a group tile it drops every light in the group at once.
+# Same vars and same sensors.yaml as widget.yaml, so switching a tile is just
+# the filename.
+#
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+
+# button:
+  <<: !include widget.yaml
+  on_long_press:
+    - homeassistant.action:
+        action: light.turn_on
+        data:
+          entity_id: ${entity_id}
+          brightness_pct: '1'
