@@ -3,9 +3,9 @@ esphome:
   # page.show inside the first page's own load event is dropped, and splash is
   # only the first page while no package adds one ahead of it.
   on_boot:
-    priority: -100
-    then:
-      - script.execute: go_home
+    - priority: -100
+      then:
+        - script.execute: go_home
 
 font: !include
   file: fonts/fonts.yaml

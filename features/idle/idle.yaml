@@ -125,22 +125,22 @@ esphome:
   includes:
     - idle.h # idle_ms()
   on_boot:
-    priority: -100 # after LVGL has built home_btn
-    then:
-      # Holding Home for 1.5s sleeps. Attached here rather than in
-      # footer/widget.yaml, which every layout shares whether or not it idles.
-      # home_btn's own on_press (go home) still fires at touch-down.
-      - lambda: |-
-          auto cb = [](lv_event_t *e) {
-            if (lv_event_get_code(e) == LV_EVENT_PRESSED) {
-              id(sleep_hold).execute();
-            } else {  // RELEASED or PRESS_LOST: let go before the hold completed
-              id(sleep_hold).stop();
-            }
-          };
-          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESSED, nullptr);
-          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_RELEASED, nullptr);
-          lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESS_LOST, nullptr);
+    - priority: -100 # after LVGL has built home_btn
+      then:
+        # Holding Home for 1.5s sleeps. Attached here rather than in
+        # footer/widget.yaml, which every layout shares whether or not it idles.
+        # home_btn's own on_press (go home) still fires at touch-down.
+        - lambda: |-
+            auto cb = [](lv_event_t *e) {
+              if (lv_event_get_code(e) == LV_EVENT_PRESSED) {
+                id(sleep_hold).execute();
+              } else {  // RELEASED or PRESS_LOST: let go before the hold completed
+                id(sleep_hold).stop();
+              }
+            };
+            lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESSED, nullptr);
+            lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_RELEASED, nullptr);
+            lv_obj_add_event_cb(id(home_btn), cb, LV_EVENT_PRESS_LOST, nullptr);
 
 script:
   - id: sleep_note # publishes "<event> HH:MM" to sleep_last_event
