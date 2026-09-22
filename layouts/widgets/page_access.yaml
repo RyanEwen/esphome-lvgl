@@ -3,6 +3,20 @@
 # required vars:
 #   page: the page's id
 
+esphome:
+  on_boot:
+    # Put back the Home page chosen in Home Assistant, which the layout keeps
+    # as a hash of its name. Before go_home at -100.
+    - priority: 0
+      then:
+        - if:
+            condition:
+              - lambda: return id(home_page_hash) == fnv1_hash("${page}");
+            then:
+              - select.set:
+                  id: home_page_select
+                  option: ${page}
+
 switch:
   - id: show_${page}_page
     platform: template
