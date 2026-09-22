@@ -15,24 +15,42 @@ binary_sensor:
           else:
             - lvgl.widget.show: nav_link_lost
 
+# 12- or 24-hour time for every clock on the panel: the header here, the sleep
+# clock, and the printer tiles' end times. Lives with the header because every
+# layout includes this package and it already owns ha_time.
+switch:
+  - id: clock_24h
+    platform: template
+    name: 24-hour time
+    icon: mdi:hours-24
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_state:
+      - script.execute: refresh_nav_clock
+
+script:
+  - id: refresh_nav_clock
+    then:
+      - lvgl.label.update:
+          id: nav_clock
+          text: !lambda |-
+            auto now = id(ha_time).now();
+            if (!now.is_valid()) {  // the switch restores before the first time sync
+              return std::string(" ");
+            }
+            return now.strftime(id(clock_24h).state ? "%H:%M" : "%I:%M %p");
+
 time:
   - id: ha_time
     platform: homeassistant
     on_time_sync:
-      - lvgl.label.update:
-          id: nav_clock
-          text:
-            time_format: "%I:%M %p"
-            time: ha_time
+      - script.execute: refresh_nav_clock
     on_time:
       - minutes: '*'
         seconds: 0
         then:
-          - lvgl.label.update:
-              id: nav_clock
-              text:
-                time_format: "%I:%M %p"
-                time: ha_time
+          - script.execute: refresh_nav_clock
 
 # sensor:
 #   - id: thermostat_temp

@@ -47,6 +47,7 @@ select:
     options: []
 
 lvgl:
+  id: main_lvgl # for features that need the LVGL component itself, e.g. sleep_clock
   default_font: roboto_md
   theme: !include themes/main.yaml
   top_layer:

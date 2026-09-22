@@ -5,12 +5,14 @@
 ## Supported Devices
 * Guition `JC3248W535` 3.5" 320x480 portrait, with capacitive touch and USB-C. [AliExpress Link](https://www.aliexpress.com/item/1005007566046827.html).
 * Sunton `ESP32-2432S028R` 2.8" 240x320 portrait, with resistive touch and USB micro-B. [AliExpress Link](https://www.aliexpress.com/item/1005004502250619.html).
+* Sunton `ESP32-2432S028`, USB-C + micro-B revision with an ILI9342 panel: 2.8" 320x240 landscape, drawn portrait, with resistive touch. Same board as the `ESP32-2432S028R` otherwise.
 * Sunton `ESP32-8048S043` 4.3" 480x800 portrait, with capactivive touch and USB-C. [AliExpress Link](https://www.aliexpress.com/item/1005004788147691.html).
 * Sunton `ESP32-8048S050` 5.0" 480x800 portrait, with capactivive touch and USB-C. [AliExpress Link](https://www.aliexpress.com/item/1005004952694042.html).
 * Elecrow CrowPanel `DIS05035H` (v2.2) 3.5" 320x480 portrait, with resistive touch and USB-C. [Manufacturer's Link](https://www.elecrow.com/esp32-display-3-5-inch-hmi-display-spi-tft-lcd-touch-screen.html).
 
 ## Changelog
 ### 2026-09-21
+* Add `devices/ESP32-2432S028-9342.yaml` and `sunton-28-9342-example.yaml`, for the USB-C + micro-B CYD with an ILI9342 panel. It includes `ESP32-2432S028R.yaml` and changes only the panel: ESPHome's own `ESP32-2432S028-9342` display model in RGB order, `lvgl: rotation: 270`, and the touch transform and calibration to match.
 * Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
 * [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
@@ -26,7 +28,11 @@
 * [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
 * **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
 * Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
-* `480x320` panels have a **Home page** select and a **Show \<page\> page** switch per page in Home Assistant. By default every page shows and home is `home_page`, so nothing changes until you use them. A page hidden with `skip: true` in YAML stays hidden. See "How to run one image on several panels".
+* Add `features/sleep_clock/sleep_clock.yaml`: a dim split-flap clock in place of the dark sleep, with its own brightness and optional red night colours. Needs `features/idle/idle.yaml`. See "Optional features".
+* A **24-hour time** switch (in the shared header package) sets the header clock, the sleep clock and the printer end times.
+* Every layout's `lvgl:` block now has `id: main_lvgl`, for features that need the LVGL component itself.
+* ESPHome 2026.9.0's bundled LVGL 9.5.0 leaks memory for every frame that draws an object scaled to 0 (fixed in LVGL 9.6.0; esphome/esphome#19439). If you animate `transform_scale_x/y`, hide the object while its scale is 0.
+* Every layout has a **Home page** select and a **Show \<page\> page** switch per page in Home Assistant. By default every page shows and home is `home_page`, so nothing changes until you use them. A page hidden with `skip: true` in YAML stays hidden. See "How to run one image on several panels".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -50,6 +56,7 @@ Every board here draws portrait. The files in `layouts/` are named for the panel
 | Guition `JC3248W535` | 320x480 | 320x480 | `layouts/480x320.yaml` |
 | Elecrow `DIS05035H` | 320x480 | 320x480 | `layouts/480x320.yaml` |
 | Sunton `ESP32-2432S028R` | 240x320 | 240x320 | `layouts/320x240.yaml` |
+| Sunton `ESP32-2432S028` (ILI9342) | 320x240 | 240x320, via `rotation: 270` | `layouts/320x240.yaml` |
 | Sunton `ESP32-8048S043` | 800x480 | 480x800, via `rotation: 90` | `layouts/800x480.yaml` |
 | Sunton `ESP32-8048S050` | 800x480 | 480x800, via `rotation: 90` | `layouts/800x480.yaml` |
 
@@ -116,6 +123,17 @@ It is not free, which is why it is a feature and off in the examples. Measured o
 * **CPU:** ~2% of a core.
 * **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
 
+### `features/sleep_clock/sleep_clock.yaml`
+A dim split-flap clock in place of the dark sleep, whether the sleep comes from the idle timer, holding the home button or **Sleep now**. Turn it on with the **Sleep clock** switch; **Sleep clock brightness** sets how bright it is, as a percentage of the ceiling. **Night colours** (At night / Always / Never) turns the face red, where "at night" follows `sun.yaml` or `ambient_light.yaml`. A touch returns to the page the clock replaced. Needs `features/idle/idle.yaml`, listed before it.
+
+The card sizes default to the 320px-wide canvas of the 3.5" boards. For the others, set these substitutions in the top-level config (the matching examples carry them, commented out):
+
+| Layout | `sleep_clock_card_width` | `_card_height` | `_card_gap` | `_pair_gap` | `_digit_size` |
+| --- | --- | --- | --- | --- | --- |
+| `320x240` | 50 | 84 | 4 | 12 | 66 |
+| `480x320` | 68 (default) | 112 | 6 | 16 | 88 |
+| `800x480` | 102 | 168 | 8 | 24 | 132 |
+
 ## How-tos
 ### How to choose which pages a device shows
 List the pages after `layout:` in the device's config file. They appear in the order they are listed, so reordering the lines reorders the navigation, and leaving a line out leaves that page off the device:
@@ -145,7 +163,7 @@ substitutions:
   home_page: printers
 ```
 
-On `480x320` panels this is the default for the **Home page** select in Home Assistant, which changes it on a running panel.
+This is the default for the **Home page** select in Home Assistant, which changes it on a running panel.
 
 ### How to hide pages on particular devices
 The simplest way is to leave the page out of the device's page list (see "How to choose which pages a device shows").
@@ -160,7 +178,7 @@ lvgl:
       skip: true
 ```
 
-On `480x320` panels each page also has a **Show \<page\> page** switch in Home Assistant, which hides and shows it on a running panel; the home page can't be hidden, and a page given `skip: true` stays hidden whatever its switch says. To have a page start hidden but leave Home Assistant able to show it, default its switch to off instead:
+Each page also has a **Show \<page\> page** switch in Home Assistant, which hides and shows it on a running panel; the home page can't be hidden, and a page given `skip: true` stays hidden whatever its switch says. To have a page start hidden but leave Home Assistant able to show it, default its switch to off instead:
 ```yaml
 switch:
   - id: !extend show_bedroom_page

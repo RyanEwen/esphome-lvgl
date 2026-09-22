@@ -1,0 +1,38 @@
+# ESP32-2432S028 "Cheap Yellow Display", USB-C + Micro-USB revision with an
+# ILI9342 panel. The board is ESP32-2432S028R.yaml's -- same pins, backlight,
+# LED and touch -- so this file only changes what the panel changes:
+#
+# - the display: ESPHome's own ESP32-2432S028-9342 model, which carries the
+#   pins and init sequence, in RGB order (the model's BGR default swaps red
+#   and blue on this panel)
+# - the orientation: the panel is natively landscape (320x240), so LVGL
+#   rotates it to the 320x240 layout's portrait canvas. LVGL rotates the
+#   touch points with it, so the touch transform only maps the XPT2046 onto
+#   the panel's native frame.
+
+packages:
+  base: !include ESP32-2432S028R.yaml
+
+display:
+  - id: !remove main_display
+  - id: main_display
+    platform: mipi_spi
+    model: ESP32-2432S028-9342
+    color_order: RGB
+    spi_id: tft
+    update_interval: never
+    auto_clear_enabled: false
+
+touchscreen:
+  - id: !extend main_touchscreen
+    calibration: # swapped to match swap_xy
+      x_min: 340
+      x_max: 3860
+      y_min: 280
+      y_max: 3860
+    transform:
+      swap_xy: true
+      mirror_x: false # the base's mirror_x is for the portrait ILI9341 panel
+
+lvgl:
+  rotation: 270
