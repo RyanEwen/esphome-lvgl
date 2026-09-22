@@ -98,6 +98,8 @@ lvgl:
                       <<: !include ../vars/button.yaml
 
 packages:
+  lighting_1_access: !include { file: ../../widgets/page_access.yaml, vars: { page: lighting_1 } }
+
   second_floor_lights_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_group_buttons/sensors.yaml, vars: {
     uid: second_floor_lights,
     entity_id: light.second_floor_lights

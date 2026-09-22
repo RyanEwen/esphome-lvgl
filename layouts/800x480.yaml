@@ -29,9 +29,22 @@ font: !include
     padding: 8
 
 script:
+  # each page's page_access.yaml adds the line that shows it when it's home
   - id: go_home
-    then:
-      - lvgl.page.show: ${home_page}
+    then: []
+
+select:
+  # Which page is home, from Home Assistant; ${home_page} is the default.
+  # Each page's page_access.yaml adds itself to the list.
+  - id: home_page_select
+    platform: template
+    name: Home page
+    icon: mdi:home
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_option: ${home_page}
+    options: []
 
 lvgl:
   id: main_lvgl # for features that need the LVGL component itself, e.g. sleep_clock

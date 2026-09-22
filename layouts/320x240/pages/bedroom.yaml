@@ -108,6 +108,8 @@ lvgl:
                         data: { entity_id: media_player.bedroom_android_tv }
 
 packages:
+  bedroom_access: !include { file: ../../widgets/page_access.yaml, vars: { page: bedroom } }
+
   bedroom_tv_widget_sensors: !include { file: ../../widgets/bedroom_tv.sensor.yaml }
 
   bedroom_light_1_widget_sensors: !include { file: ../../widgets/buttons/icon_text_buttons/light_buttons/sensors.yaml, vars: {
