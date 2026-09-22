@@ -1,0 +1,22 @@
+# Memory and loop-time sensors, for chasing a leak or a slow crash. Opt in on
+# the panel that is misbehaving, after `common:` (which owns the debug:
+# component these read from):
+#
+#   packages:
+#     ...
+#     memory: !include features/diagnostics/memory.yaml
+#
+# A leak shows as Heap Free or Min Free trending down over hours; Largest Block
+# falling while Free holds is fragmentation. Each reports once a minute, which
+# is a recorder row a minute per sensor -- the reason this is not always on.
+
+sensor:
+  - platform: debug
+    free:
+      name: Heap Free
+    min_free:
+      name: Heap Min Free
+    block:
+      name: Heap Largest Block
+    loop_time:
+      name: Loop Time

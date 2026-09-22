@@ -20,6 +20,10 @@
 * [Breaking change] `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced. A page that included them switches the tile body to `widgets/printers/tile_combined.yaml` and its sensors to `widgets/printers/printer_combined.sensors.yaml`; the printers page in each layout shows the shape. The tile looks the same as before.
 * A printer tile can instead use `widgets/printers/tile.yaml` with `printer.sensors.yaml`: one row per AMS unit, with humidity and a heater icon, and rows that appear and disappear with the hardware. See "How to show every AMS unit".
 * Tray text takes its colour from the filament, so a white or black spool stays readable. An idle or offline printer shows an empty grey bar rather than the last job's full one.
+* `common.yaml` now always reports **Uptime** and **Reset Reason**, so an unexplained restart leaves evidence. `features/diagnostics/` adds opt-in heap, loop-time and PSRAM sensors for chasing a leak. See "Optional features".
+* [Breaking change] **Restart** is now a button rather than a switch, so Home Assistant shows it as an action instead of an on/off state. Its entity moves from `switch.<name>_restart` to `button.<name>_restart`; update any automation or dashboard that pressed the old one. Home Assistant removes the old switch by itself once the device reconnects.
+* [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
+* **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -95,6 +99,9 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 
 ### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
+
+### `features/diagnostics/memory.yaml` and `features/diagnostics/psram.yaml`
+Sensors for chasing a leak or a slow crash: **Heap Free**, **Heap Min Free**, **Heap Largest Block** and **Loop Time**, plus **PSRAM Free** for boards with PSRAM (the Guition and the Sunton 4.3" / 5"). A leak shows as Free or Min Free trending down over hours; Largest Block falling while Free holds is fragmentation. Each reports once a minute, a recorder row a minute per sensor, so turn them on for the panel you are chasing a problem on rather than everywhere. Uptime and Reset Reason are always on, in `common.yaml`: the evidence for an unexplained restart can only be caught at the boot that follows it.
 
 ## How-tos
 ### How to choose which pages a device shows
