@@ -1,0 +1,16 @@
+# Every sensor package a printer in the combined single-AMS format needs: the
+# core status/progress sensors plus the tray sensors for AMS 1.
+#
+# No humidity and no drying, because tile_combined.yaml has neither a humidity
+# column nor a heater icon to write to, and its line is statically visible so
+# nothing has to reveal it. That also means this printer subscribes to fewer
+# entities than a stacked one -- the trade for the line it saves is that extra
+# AMS units on this machine would not appear.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+
+packages:
+  core: !include sensors_core.yaml
+  ams_1: !include { file: ams_row.sensors.yaml, vars: { ams_id: "1" } }

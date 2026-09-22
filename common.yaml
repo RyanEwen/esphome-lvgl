@@ -23,7 +23,7 @@ api:
         id: homeassistant_ip
         value: !lambda return client_address;
 
-switch:
+button:
   - platform: restart
     name: Restart
 
@@ -31,23 +31,32 @@ binary_sensor:
   - platform: status
     name: Status
 
+# Always on, because the evidence for an unexplained restart can only be caught
+# at the boot that follows it: uptime shows that one happened, reset reason says
+# why (a crash, a watchdog, or the 15-minute api/wifi reboot_timeout, which
+# reads as a software reset). The memory sensors for chasing one down are
+# opt-in: features/diagnostics/.
+debug:
+  update_interval: 60s
+
 sensor:
+  # the boot time, published once at the first clock sync, rather than a
+  # seconds count every minute -- a restart shows as a jump, and it costs the
+  # recorder one row per boot
+  - platform: uptime
+    type: timestamp
+    name: Uptime
+
   - id: wifi_signal_db
     name: WiFi Signal
     platform: wifi_signal
     update_interval: 60s
     entity_category: diagnostic
 
-  - id: wifi_signal_strength
-    name: WiFi Strength
-    platform: copy
-    source_id: wifi_signal_db
-    filters:
-      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
-    unit_of_measurement: "%"
-    entity_category: diagnostic
-
 text_sensor:
+  - platform: debug
+    reset_reason:
+      name: Reset Reason
   - platform: wifi_info
     ip_address:
       name: IP Address

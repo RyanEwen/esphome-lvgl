@@ -1,0 +1,6 @@
+# layout: for a printer tile -- name row, then one row per AMS unit, then the
+# status row and progress bar.
+type: FLEX
+flex_flow: COLUMN
+flex_align_main: START
+# pad_row: 3 # RESOLUTION-SPECIFIC

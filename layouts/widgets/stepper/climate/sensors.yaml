@@ -1,0 +1,121 @@
+# Binds a stepper tile to a `climate` entity's single target temperature. The
+# range comes from its min_temp / max_temp; the step is a var, since most
+# thermostats do not report one (HA's own card assumes 0.5 for Celsius, 1 for
+# Fahrenheit).
+#
+# A thermostat that is off, or in heat_cool with a high/low pair, has no
+# single target -- HA sends none, the tile shows "--" and the buttons do
+# nothing. Changing the mode is left to Home Assistant.
+#
+# The icon carries hvac_action in shape as well as colour: a flame while
+# heating, a snowflake while cooling, a fan while only the fan runs, the
+# thermostat otherwise.
+#
+# required vars:
+# - uid
+# - entity_id
+# - step
+
+globals:
+  - id: ${uid}_pending # what the tile shows: HA's target, or the taps not yet sent
+    type: float
+    restore_value: false
+    initial_value: NAN
+
+sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: temperature
+    on_value:
+      # while taps are pending, HA's target is stale -- leave the tile alone
+      - if:
+          condition:
+            not:
+              script.is_running: ${uid}_nudge
+          then:
+            - globals.set:
+                id: ${uid}_pending
+                value: !lambda return x;
+            - script.execute: ${uid}_show
+  - id: ${uid}_current
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: current_temperature
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_widget_detail
+          text: !lambda |-
+            if (std::isnan(x))
+              return std::string("");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.0f°", x);
+            return std::string(buf);
+  - id: ${uid}_min
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: min_temp
+  - id: ${uid}_max
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: max_temp
+
+text_sensor:
+  - id: ${uid}_action
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: hvac_action
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_widget_icon
+          text: !lambda |-
+            if (x == "heating") return std::string("\U000F0238");  // fire
+            if (x == "cooling") return std::string("\U000F0717");  // snowflake
+            if (x == "fan") return std::string("\U000F0210");      // fan
+            return std::string("\U000F0393");                      // thermostat
+          text_color: !lambda |-
+            if (x == "heating") return lv_color_hex(0xFFAF00);
+            if (x == "cooling") return lv_color_hex(0x00B6FF);
+            return lv_color_hex(0x9AA0AE);
+
+script:
+  - id: ${uid}_show
+    then:
+      - lvgl.label.update:
+          id: ${uid}_widget_value
+          text: !lambda |-
+            float v = id(${uid}_pending);
+            if (std::isnan(v))
+              return std::string("--");
+            char buf[16];
+            snprintf(buf, sizeof(buf), fmodf(v, 1.0f) != 0 ? "%.1f°" : "%.0f°", v);
+            return std::string(buf);
+  # restart: each tap cancels the pending send and starts the wait again, so
+  # only the last value goes out
+  - id: ${uid}_nudge
+    mode: restart
+    parameters:
+      steps: int
+    then:
+      - if:
+          condition:
+            lambda: return !std::isnan(id(${uid}_pending));
+          then:
+            - lambda: |-
+                float v = id(${uid}_pending) + steps * ${step};
+                if (!std::isnan(id(${uid}_min).state)) v = std::max(v, id(${uid}_min).state);
+                if (!std::isnan(id(${uid}_max).state)) v = std::min(v, id(${uid}_max).state);
+                id(${uid}_pending) = v;
+            - script.execute: ${uid}_show
+            - delay: 1s
+            - homeassistant.action:
+                action: climate.set_temperature
+                data:
+                  entity_id: ${entity_id}
+                  temperature: !lambda return to_string(id(${uid}_pending));
+            # then take HA's word for it, in case it clamped or refused the value
+            - delay: 3s
+            - globals.set:
+                id: ${uid}_pending
+                value: !lambda return id(${uid}_widget_sensor).state;
+            - script.execute: ${uid}_show

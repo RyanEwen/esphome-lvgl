@@ -1,0 +1,105 @@
+# A value you set by steps: the name and an icon on the left, [-] value [+]
+# on the right. The base for stepper/number/ and stepper/climate/, which bind
+# the value to an entity; not used on its own.
+#
+# The tile is an obj, like the status tiles, so it renders darker and only the
+# two buttons read as pressable. Each tap moves a pending value on screen at
+# once; the family's sensors file sends it to Home Assistant a moment after the
+# last tap, so a run of taps is one call, not one each.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+# - icon
+# - button_width
+# - value_width
+
+# obj:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  border_width: 0
+  radius: 20
+  pad_right: 8 # the buttons have their own rounded edge
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_cross: CENTER
+    pad_column: 4
+  widgets:
+    # the name side takes whatever the buttons leave, and a long name ends in
+    # "..." rather than running under the - button
+    - obj:
+        flex_grow: 1
+        height: 100%
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        widgets:
+          - label:
+              id: ${uid}_widget_icon
+              text: ${icon}
+              text_font: mdi_md
+              text_color: 0x9AA0AE
+              align: TOP_LEFT
+          - label: # beside the icon; climate puts the room temperature here
+              id: ${uid}_widget_detail
+              text: ""
+              align_to:
+                id: ${uid}_widget_icon
+                align: OUT_RIGHT_MID
+                x: 6
+          - label:
+              id: ${uid}_widget_text
+              text: ${text}
+              width: 100%
+              max_height: 50% # one line, so DOT truncates rather than wraps
+              long_mode: DOT
+              align: BOTTOM_LEFT
+    - obj:
+        width: SIZE_CONTENT
+        height: 100%
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        layout:
+          type: FLEX
+          pad_column: 4
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+        widgets:
+          - button:
+              id: ${uid}_widget_minus
+              width: ${button_width}
+              height: 100%
+              on_click:
+                - script.execute:
+                    id: ${uid}_nudge
+                    steps: -1
+              widgets:
+                - label:
+                    text: "\U000F0374" # minus
+                    text_font: mdi_md
+                    align: CENTER
+          - label:
+              id: ${uid}_widget_value
+              width: ${value_width}
+              text: "--"
+              text_font: roboto_lg
+              text_align: CENTER
+          - button:
+              id: ${uid}_widget_plus
+              width: ${button_width}
+              height: 100%
+              on_click:
+                - script.execute:
+                    id: ${uid}_nudge
+                    steps: 1
+              widgets:
+                - label:
+                    text: "\U000F0415" # plus
+                    text_font: mdi_md
+                    align: CENTER

@@ -1,0 +1,12 @@
+# PSRAM Free, for boards that have PSRAM -- where LVGL's draw buffers and
+# layers live, so an LVGL leak shows here first. Opt in alongside memory.yaml,
+# and only on a board whose device file configures psram:.
+#
+#   packages:
+#     ...
+#     psram: !include features/diagnostics/psram.yaml
+
+sensor:
+  - platform: debug
+    psram:
+      name: PSRAM Free

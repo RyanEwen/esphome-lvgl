@@ -11,12 +11,21 @@
 
 ## Changelog
 ### 2026-09-21
+* Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
 * [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
 * Add `features/`, for behaviour a panel may or may not want, opted into from the top-level config. Device files stay hardware only and layouts stay pages only. See "Optional features".
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
 * `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
 * The boot screen is dark rather than white, so a reboot at night does not light the room.
+* [Breaking change] `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced. A page that included them switches the tile body to `widgets/printers/tile_combined.yaml` and its sensors to `widgets/printers/printer_combined.sensors.yaml`; the printers page in each layout shows the shape. The tile looks the same as before.
+* A printer tile can instead use `widgets/printers/tile.yaml` with `printer.sensors.yaml`: one row per AMS unit, with humidity and a heater icon, and rows that appear and disappear with the hardware. See "How to show every AMS unit".
+* Tray text takes its colour from the filament, so a white or black spool stays readable. An idle or offline printer shows an empty grey bar rather than the last job's full one.
+* `common.yaml` now always reports **Uptime** and **Reset Reason**, so an unexplained restart leaves evidence. `features/diagnostics/` adds opt-in heap, loop-time and PSRAM sensors for chasing a leak. See "Optional features".
+* [Breaking change] **Restart** is now a button rather than a switch, so Home Assistant shows it as an action instead of an on/off state. Its entity moves from `switch.<name>_restart` to `button.<name>_restart`; update any automation or dashboard that pressed the old one. Home Assistant removes the old switch by itself once the device reconnects.
+* [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
+* **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
+* Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
 * `480x320` panels have a **Home page** select and a **Show \<page\> page** switch per page in Home Assistant. By default every page shows and home is `home_page`, so nothing changes until you use them. A page hidden with `skip: true` in YAML stays hidden. See "How to run one image on several panels".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
@@ -94,6 +103,19 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 ### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
 
+### `features/diagnostics/memory.yaml` and `features/diagnostics/psram.yaml`
+Sensors for chasing a leak or a slow crash: **Heap Free**, **Heap Min Free**, **Heap Largest Block** and **Loop Time**, plus **PSRAM Free** for boards with PSRAM (the Guition and the Sunton 4.3" / 5"). A leak shows as Free or Min Free trending down over hours; Largest Block falling while Free holds is fragmentation. Each reports once a minute, a recorder row a minute per sensor, so turn them on for the panel you are chasing a problem on rather than everywhere. Uptime and Reset Reason are always on, in `common.yaml`: the evidence for an unexplained restart can only be caught at the boot that follows it.
+### `features/ble_proxy/ble_proxy.yaml`
+Makes the panel a [Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/) for Home Assistant, relaying advertisements and lending connection slots, so HA's Bluetooth reaches the room the panel is in. The **Bluetooth proxy** switch starts and stops the whole Bluetooth stack without a reflash; `ble_proxy_default` (`ON` or `OFF`) sets its first value.
+
+It is not free, which is why it is a feature and off in the examples. Measured on a Guition `JC3248W535`:
+
+* **Boards:** needs PSRAM and ~400KB of flash, so the Guition and the Sunton `ESP32-8048S043` / `ESP32-8048S050` only. The Elecrow and the CYD have no PSRAM, and the CYD's firmware no longer fits its app partition.
+* **RAM:** ~95KB of internal RAM while running, which on the ESP32-S3 cannot move to PSRAM. Free heap went from 157KB to 62KB, and its low point from 135KB to 26KB.
+* **WiFi:** WiFi and Bluetooth share one radio. Packet loss did not change, but the slowest replies got slower (p99 ping 1.0s to 2.5s). ESPHome's default scans continuously, which was worse again, so this feature listens 30ms in every 320ms instead. A panel with a weak WiFi signal feels this most.
+* **CPU:** ~2% of a core.
+* **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
+
 ## How-tos
 ### How to choose which pages a device shows
 List the pages after `layout:` in the device's config file. They appear in the order they are listed, so reordering the lines reorders the navigation, and leaving a line out leaves that page off the device:
@@ -156,8 +178,44 @@ Each panel then appends the end of its MAC address to its name (`guition-35-test
 
 Two things to know: `esphome upload` can no longer find the panel by name, so pass each one's address with `--device`; and every panel shares the API key in `secrets.yaml`. Hiding a page only takes it off the touch screen; the panel still subscribes to every entity, and its web server can flip the switches.
 
+### How to add a thermostat or number tile
+`widgets/stepper/` is a tile with `-` and `+` either side of a value. Taps change the value on screen straight away, and one call goes to Home Assistant a second after the last tap, so a run of taps is one change rather than one each. A few seconds later the tile takes Home Assistant's value back, in case it clamped or refused it.
+
+* `stepper/climate/` sets a thermostat's target temperature and shows the room temperature beside its icon. The icon follows what the system is doing: a flame while heating, a snowflake while cooling, a fan while only the fan runs. The range comes from the thermostat; the `step` is a var (1 for Fahrenheit, 0.5 for Celsius is typical). A thermostat that is off, or in heat/cool with a high/low pair, has no single target, so the tile shows `--` and the buttons do nothing.
+* `stepper/number/` sets a `number` or `input_number`, with its range and step from the entity. `domain` is `number` or `input_number`; `unit` is shown after the value.
+
+As with the other tiles, include the widget on the page and its sensors package with the same `uid`. `layouts/<WxH>/pages/climate.yaml` has one of each, with placeholder entities; uncomment its line in your top-level config (or in `all.yaml`) and point it at your own. The tile's sizing is in `layouts/<WxH>/vars/stepper.yaml`. A name too long for the space left of the buttons ends in `...`, which on the 240px-wide `320x240` canvas starts at about six characters.
+
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.
+
+### How to show every AMS unit
+The demo tiles use `tile_combined.yaml`, which puts the printer name and one AMS unit's four trays on a single line. To show all of a printer's units instead, switch that tile's body to `tile.yaml` in `layouts/<WxH>/pages/printers.yaml`:
+
+```yaml
+- obj: # printer 1
+    <<: !include ../vars/printer_tile.yaml
+    layout:
+      <<: !include ../vars/printer_tile_layout.yaml
+    widgets: !include { file: ../../widgets/printers/tile.yaml, vars: {
+      uid: printer_1, name: 1 - Fred,
+      <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+```
+
+and its sensor package, in the same file, to `printer.sensors.yaml`:
+
+```yaml
+printer_1_sensors: !include { file: ../../widgets/printers/printer.sensors.yaml, vars: {
+  uid: printer_1,
+  entity_id_prefix: p1s_1
+}}
+```
+
+Change both halves together; a mismatched pair fails at config time on the ids the wrong half cannot find. The two formats can sit side by side on one page.
+
+`tile.yaml` carries all twelve slots a printer can have (AMS units `1` to `4`, AMS HTs `128` and `129`), each hidden until its unit reports humidity. Every AMS reports humidity, so that doubles as "this unit is here". A slot whose entities do not exist never sends anything and stays hidden. A unit that stops reporting hides again, and moving an AMS to another printer needs no reflash. The heater icon is discovered the same way: a unit with no drying hardware has no `_drying` entity, so its icon stays blank.
+
+The cost is the slots you do not use: on a Guition `JC3248W535`, going from 4 enumerated rows to 12 slots across two printers took RAM from 41.2% to 44.0% and flash from 18.7% to 19.3%. Empty slots are silent at boot, since Home Assistant sends nothing for an entity that does not exist.
 
 ## Todo
 This readme isn't finished. I'll be elaborating on some more techniques being used in here, such as the modularization of the widgets using `!include` and how the stateful widget files relate to their sensor counterparts (tip, just make sure to pass the same `uid` and `entity_id` when including a widget and when including the related widget sensor).
@@ -171,7 +229,7 @@ These look better in real life, I promise! I took these photos in low-light and 
 
 3.5" 320x480 portrait (Guition JC3248W535)  
 ![Lighting Page](media/guition_3.5_lighting.jpg "Lighting Page")
-![Printers Page](media/guition_3.5_printers.jpg "Printers Page")  
+![Printers Page](media/guition_3.5_printers_ams.jpg "Printers Page")  
 
 3.5" 320x480 portrait (Elecrow DIS05035H)  
 ![Lighting Page](media/elecrow_3.5_lighting.jpg "Lighting Page")
