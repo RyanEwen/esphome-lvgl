@@ -1,0 +1,17 @@
+# A thermostat tile for a `climate` entity: the target on the stepper, the
+# room temperature beside the icon, and the icon showing what the system is
+# doing. Pair with climate/sensors.yaml, same uid.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+# - button_width
+# - value_width
+
+# obj:
+  <<: !include
+    file: ../widget.yaml
+    vars:
+      icon: "\U000F0393" # thermostat; climate/sensors.yaml swaps it while running

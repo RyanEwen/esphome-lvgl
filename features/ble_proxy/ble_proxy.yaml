@@ -1,0 +1,79 @@
+# Bluetooth proxy: the panel relays BLE advertisements to Home Assistant and
+# lends it connection slots, extending HA's Bluetooth range into the room the
+# panel is in. Opt in from a top-level config, after `layout:`:
+#
+#   packages:
+#     ...
+#     ble_proxy: !include features/ble_proxy/ble_proxy.yaml
+#
+# Needs a board with PSRAM (`psram:` in the device file) and room for ~400KB
+# more firmware: the Guition JC3248W535 and the Sunton ESP32-8048S043 /
+# ESP32-8048S050. Not the Elecrow DIS05035H or the CYD (ESP32-2432S028R),
+# which have no PSRAM; the CYD's build also overflows its app partition by 69KB.
+#
+# What it costs, measured on a Guition JC3248W535 (ESP32-S3):
+#
+# - Internal RAM: ~95KB while running -- 23KB static, the rest the BLE
+#   controller and Bluedroid, which on the S3 stay in internal RAM even with
+#   use_psram (only the original ESP32 can move the controller out). Free heap
+#   went 157KB -> 62KB, and its low-water mark 135KB -> 26KB.
+# - CPU: ~2% of a core for the BLE tasks, plus ~1% more in the main loop.
+# - WiFi: the radio is shared. Interleaved on/off runs showed no extra packet
+#   loss, but worse tail latency -- p99 ping 1.0s -> 2.5s with the window
+#   below, and worse again scanning continuously (ESPHome's own default).
+#   That panel sat at -75dBm; one with a stronger link has more to spare.
+#
+# The **Bluetooth proxy** switch in Home Assistant starts and stops the whole
+# stack, not just the scan: off hands ~70KB back (the static 23KB stays) and
+# ends the airtime contention, without a reflash. The largest free block stays
+# fragmented until the next restart. Each start or stop blocks the main loop
+# for ~210ms; steady scanning does not. Its first value is `ble_proxy_default`
+# (ON or OFF).
+
+substitutions:
+  ble_proxy_default: "ON"
+
+esp32_ble:
+  enable_on_boot: false # the switch below brings it up, or not
+  use_psram: true # Bluedroid's host allocations; saves ~11KB of internal RAM on the S3
+
+esphome:
+  on_boot:
+    # The switch restores at setup priority 798, before esp32_ble sets up at
+    # 350, and a ble.enable that early is dropped -- the stack stayed down with
+    # the switch showing on. So apply the restored state again once BLE exists.
+    - priority: 300 # setup_priority::AFTER_BLUETOOTH
+      then:
+        - if:
+            condition:
+              switch.is_on: ble_proxy_on
+            then:
+              - ble.enable:
+            else:
+              - ble.disable:
+
+esp32_ble_tracker:
+  # ESPHome's default listens the whole interval and lets the coexistence
+  # arbiter share the radio. On a wall panel the WiFi link matters more than
+  # catching every advertisement, so listen 30ms in 320ms. (HA still heard
+  # ~130 devices through one panel.) Keep any window under 600ms
+  # (esphome/esphome#18655).
+  scan_parameters:
+    interval: 320ms
+    window: 30ms
+
+bluetooth_proxy:
+  active: true
+
+switch:
+  - id: ble_proxy_on
+    platform: template
+    name: Bluetooth proxy
+    icon: mdi:bluetooth
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_${ble_proxy_default}
+    turn_on_action:
+      - ble.enable:
+    turn_off_action:
+      - ble.disable:

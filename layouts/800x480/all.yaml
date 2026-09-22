@@ -6,4 +6,5 @@
 packages:
   lighting_1: !include pages/lighting_1.yaml
   lighting_2: !include pages/lighting_2.yaml
+  # climate: !include pages/climate.yaml  # opt in: thermostat and number steppers
   printers: !include pages/printers.yaml

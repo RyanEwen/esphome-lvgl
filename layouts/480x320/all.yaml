@@ -6,6 +6,7 @@
 packages:
   bedroom: !include pages/bedroom.yaml
   living_room: !include pages/living_room.yaml
+  # climate: !include pages/climate.yaml  # opt in: thermostat and number steppers
   lighting_1: !include pages/lighting_1.yaml
   lighting_2: !include pages/lighting_2.yaml
   lighting_3: !include pages/lighting_3.yaml

@@ -11,6 +11,7 @@
 
 ## Changelog
 ### 2026-09-21
+* Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
 * [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
 * Add `features/`, for behaviour a panel may or may not want, opted into from the top-level config. Device files stay hardware only and layouts stay pages only. See "Optional features".
@@ -24,6 +25,7 @@
 * [Breaking change] **Restart** is now a button rather than a switch, so Home Assistant shows it as an action instead of an on/off state. Its entity moves from `switch.<name>_restart` to `button.<name>_restart`; update any automation or dashboard that pressed the old one. Home Assistant removes the old switch by itself once the device reconnects.
 * [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
 * **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
+* Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
 * Add `features/sleep_clock/sleep_clock.yaml`: a dim split-flap clock in place of the dark sleep, with its own brightness and optional red night colours. Needs `features/idle/idle.yaml`. See "Optional features".
 * A **24-hour time** switch (in the shared header package) sets the header clock, the sleep clock and the printer end times.
 * Every layout's `lvgl:` block now has `id: main_lvgl`, for features that need the LVGL component itself.
@@ -106,6 +108,17 @@ The brightness ceiling that the dim and wake levels are relative to, in three ba
 
 ### `features/diagnostics/memory.yaml` and `features/diagnostics/psram.yaml`
 Sensors for chasing a leak or a slow crash: **Heap Free**, **Heap Min Free**, **Heap Largest Block** and **Loop Time**, plus **PSRAM Free** for boards with PSRAM (the Guition and the Sunton 4.3" / 5"). A leak shows as Free or Min Free trending down over hours; Largest Block falling while Free holds is fragmentation. Each reports once a minute, a recorder row a minute per sensor, so turn them on for the panel you are chasing a problem on rather than everywhere. Uptime and Reset Reason are always on, in `common.yaml`: the evidence for an unexplained restart can only be caught at the boot that follows it.
+### `features/ble_proxy/ble_proxy.yaml`
+Makes the panel a [Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/) for Home Assistant, relaying advertisements and lending connection slots, so HA's Bluetooth reaches the room the panel is in. The **Bluetooth proxy** switch starts and stops the whole Bluetooth stack without a reflash; `ble_proxy_default` (`ON` or `OFF`) sets its first value.
+
+It is not free, which is why it is a feature and off in the examples. Measured on a Guition `JC3248W535`:
+
+* **Boards:** needs PSRAM and ~400KB of flash, so the Guition and the Sunton `ESP32-8048S043` / `ESP32-8048S050` only. The Elecrow and the CYD have no PSRAM, and the CYD's firmware no longer fits its app partition.
+* **RAM:** ~95KB of internal RAM while running, which on the ESP32-S3 cannot move to PSRAM. Free heap went from 157KB to 62KB, and its low point from 135KB to 26KB.
+* **WiFi:** WiFi and Bluetooth share one radio. Packet loss did not change, but the slowest replies got slower (p99 ping 1.0s to 2.5s). ESPHome's default scans continuously, which was worse again, so this feature listens 30ms in every 320ms instead. A panel with a weak WiFi signal feels this most.
+* **CPU:** ~2% of a core.
+* **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
+
 ### `features/sleep_clock/sleep_clock.yaml`
 A dim split-flap clock in place of the dark sleep, whether the sleep comes from the idle timer, holding the home button or **Sleep now**. Turn it on with the **Sleep clock** switch; **Sleep clock brightness** sets how bright it is, as a percentage of the ceiling. **Night colours** (At night / Always / Never) turns the face red, where "at night" follows `sun.yaml` or `ambient_light.yaml`. A touch returns to the page the clock replaced. Needs `features/idle/idle.yaml`, listed before it.
 
@@ -158,6 +171,14 @@ lvgl:
     - id: !extend bedroom
       skip: true
 ```
+
+### How to add a thermostat or number tile
+`widgets/stepper/` is a tile with `-` and `+` either side of a value. Taps change the value on screen straight away, and one call goes to Home Assistant a second after the last tap, so a run of taps is one change rather than one each. A few seconds later the tile takes Home Assistant's value back, in case it clamped or refused it.
+
+* `stepper/climate/` sets a thermostat's target temperature and shows the room temperature beside its icon. The icon follows what the system is doing: a flame while heating, a snowflake while cooling, a fan while only the fan runs. The range comes from the thermostat; the `step` is a var (1 for Fahrenheit, 0.5 for Celsius is typical). A thermostat that is off, or in heat/cool with a high/low pair, has no single target, so the tile shows `--` and the buttons do nothing.
+* `stepper/number/` sets a `number` or `input_number`, with its range and step from the entity. `domain` is `number` or `input_number`; `unit` is shown after the value.
+
+As with the other tiles, include the widget on the page and its sensors package with the same `uid`. `layouts/<WxH>/pages/climate.yaml` has one of each, with placeholder entities; uncomment its line in your top-level config (or in `all.yaml`) and point it at your own. The tile's sizing is in `layouts/<WxH>/vars/stepper.yaml`. A name too long for the space left of the buttons ends in `...`, which on the 240px-wide `320x240` canvas starts at about six characters.
 
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.
