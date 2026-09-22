@@ -24,6 +24,7 @@ packages:
   lighting_1: !include layouts/320x240/pages/lighting_1.yaml
   lighting_2: !include layouts/320x240/pages/lighting_2.yaml
   lighting_3: !include layouts/320x240/pages/lighting_3.yaml
+  # printers_on_a_diet: !include layouts/320x240/pages/printers-on-a-diet.yaml  # see "Putting a low-memory panel on a diet" in the README
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun

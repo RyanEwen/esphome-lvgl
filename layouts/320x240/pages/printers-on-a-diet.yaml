@@ -1,0 +1,74 @@
+# Printers on a diet: the printers page, cut down to fit a board without PSRAM,
+# and the sensors its tiles need.
+# Include it from the top-level config after `layout:`; pages appear in the
+# order they are listed.
+#
+# The 240px boards have no PSRAM, so each tile lists the AMS units its printer
+# really has rather than widgets/printers/tile.yaml's twelve self-revealing
+# slots, which run LVGL out of memory here (see "Putting a low-memory panel on
+# a diet" in the README). Fred has one AMS and takes the combined line; Wilma
+# has two AMS units and an AMS HT. Change the rows and their sensors packages
+# to match your printers -- a row with no sensors package fails at config time.
+
+lvgl:
+  pages:
+    - id: printers_on_a_diet
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Printers
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/printer_layout.yaml
+            widgets:
+              - obj: # 1 - Fred: one AMS, on the name line
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets: !include { file: ../../widgets/printers/tile_combined.yaml, vars: {
+                    uid: printer_1, name: 1 - Fred,
+                    <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+
+              - obj: # 2 - Wilma: AMS 1, AMS 2 and an AMS HT
+                  <<: !include ../vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../vars/printer_tile_layout.yaml
+                  widgets:
+                    - label:
+                        width: 100%
+                        height: SIZE_CONTENT
+                        text: "2 - Wilma"
+                    - obj:
+                        <<: !include { file: ../../widgets/printers/ams_row.yaml, vars: {
+                          uid: printer_2, ams_id: "1", label: "1", <<: !include ../vars/ams_row.yaml } }
+                    - obj:
+                        <<: !include { file: ../../widgets/printers/ams_row.yaml, vars: {
+                          uid: printer_2, ams_id: "2", label: "2", <<: !include ../vars/ams_row.yaml } }
+                    - obj:
+                        <<: !include { file: ../../widgets/printers/ams_row_single.yaml, vars: {
+                          uid: printer_2, ams_id: "128", label: "HT", <<: !include ../vars/ams_row.yaml } }
+                    - obj:
+                        <<: !include { file: ../../widgets/printers/tile_status.yaml, vars: { uid: printer_2 } }
+                    - bar:
+                        <<: !include { file: ../../widgets/printers/tile_progress.yaml, vars: {
+                          uid: printer_2, <<: !include ../vars/printer_bar.yaml } }
+
+packages:
+  printers_on_a_diet_access: !include { file: ../../widgets/page_access.yaml, vars: { page: printers_on_a_diet } }
+
+  printer_1_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
+    uid: printer_1,
+    entity_id_prefix: p1s_1
+  }}
+
+  printer_2_core: !include { file: ../../widgets/printers/sensors_core.yaml, vars: {
+    uid: printer_2, entity_id_prefix: p1s_2 } }
+  printer_2_ams_1: !include { file: ../../widgets/printers/ams_unit.sensors.yaml, vars: {
+    uid: printer_2, entity_id_prefix: p1s_2, ams_id: "1", variant: "" } }
+  printer_2_ams_2: !include { file: ../../widgets/printers/ams_unit.sensors.yaml, vars: {
+    uid: printer_2, entity_id_prefix: p1s_2, ams_id: "2", variant: "" } }
+  printer_2_ams_128: !include { file: ../../widgets/printers/ams_unit.sensors.yaml, vars: {
+    uid: printer_2, entity_id_prefix: p1s_2, ams_id: "128", variant: "_single" } }

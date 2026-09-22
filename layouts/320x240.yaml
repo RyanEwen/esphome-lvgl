@@ -1,4 +1,6 @@
 esphome:
+  includes:
+    - widgets/printers/tray_color.h # tray::bg / tray::ink, shared by every tray pill
   # Go home once everything is set up, rather than from splash's on_load: a
   # page.show inside the first page's own load event is dropped, and splash is
   # only the first page while no package adds one ahead of it.
@@ -13,7 +15,7 @@ esphome:
 font: !include
   file: fonts/fonts.yaml
   vars:
-    text_sm: 14
+    text_sm: 12 # the printer tiles: '100%' has to fit a 31px tray pill
     text_md: 18
     text_lg: 22
     text_xl: 26
