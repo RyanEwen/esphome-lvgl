@@ -25,6 +25,7 @@
 * [Breaking change] **Restart** is now a button rather than a switch, so Home Assistant shows it as an action instead of an on/off state. Its entity moves from `switch.<name>_restart` to `button.<name>_restart`; update any automation or dashboard that pressed the old one. Home Assistant removes the old switch by itself once the device reconnects.
 * [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
 * **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
+* Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -103,6 +104,16 @@ The brightness ceiling that the dim and wake levels are relative to, in three ba
 
 ### `features/diagnostics/memory.yaml` and `features/diagnostics/psram.yaml`
 Sensors for chasing a leak or a slow crash: **Heap Free**, **Heap Min Free**, **Heap Largest Block** and **Loop Time**, plus **PSRAM Free** for boards with PSRAM (the Guition and the Sunton 4.3" / 5"). A leak shows as Free or Min Free trending down over hours; Largest Block falling while Free holds is fragmentation. Each reports once a minute, a recorder row a minute per sensor, so turn them on for the panel you are chasing a problem on rather than everywhere. Uptime and Reset Reason are always on, in `common.yaml`: the evidence for an unexplained restart can only be caught at the boot that follows it.
+### `features/ble_proxy/ble_proxy.yaml`
+Makes the panel a [Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/) for Home Assistant, relaying advertisements and lending connection slots, so HA's Bluetooth reaches the room the panel is in. The **Bluetooth proxy** switch starts and stops the whole Bluetooth stack without a reflash; `ble_proxy_default` (`ON` or `OFF`) sets its first value.
+
+It is not free, which is why it is a feature and off in the examples. Measured on a Guition `JC3248W535`:
+
+* **Boards:** needs PSRAM and ~400KB of flash, so the Guition and the Sunton `ESP32-8048S043` / `ESP32-8048S050` only. The Elecrow and the CYD have no PSRAM, and the CYD's firmware no longer fits its app partition.
+* **RAM:** ~95KB of internal RAM while running, which on the ESP32-S3 cannot move to PSRAM. Free heap went from 157KB to 62KB, and its low point from 135KB to 26KB.
+* **WiFi:** WiFi and Bluetooth share one radio. Packet loss did not change, but the slowest replies got slower (p99 ping 1.0s to 2.5s). ESPHome's default scans continuously, which was worse again, so this feature listens 30ms in every 320ms instead. A panel with a weak WiFi signal feels this most.
+* **CPU:** ~2% of a core.
+* **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
 
 ## How-tos
 ### How to choose which pages a device shows
