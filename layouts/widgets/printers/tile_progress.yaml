@@ -1,0 +1,12 @@
+# Print progress bar of a printer tile.
+#
+# required vars:
+# - uid
+# - bar_height
+
+# - bar:
+  id: ${uid}_print_progress_bar
+  width: 100%
+  height: ${bar_height} # RESOLUTION-SPECIFIC
+  indicator:
+    bg_color: 0x00B6FF

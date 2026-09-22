@@ -17,6 +17,13 @@
 * Add `features/idle/`: dim, go home and sleep when idle, wake on touch, with the brightness ceiling following the sun or a light sensor.
 * `devices/SDL.yaml` declares its touchscreen as a list with `id: main_touchscreen`, like the other device files, so features can extend it.
 * The boot screen is dark rather than white, so a reboot at night does not light the room.
+* [Breaking change] `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced. A page that included them switches the tile body to `widgets/printers/tile_combined.yaml` and its sensors to `widgets/printers/printer_combined.sensors.yaml`; the printers page in each layout shows the shape. The tile looks the same as before.
+* A printer tile can instead use `widgets/printers/tile.yaml` with `printer.sensors.yaml`: one row per AMS unit, with humidity and a heater icon, and rows that appear and disappear with the hardware. See "How to show every AMS unit".
+* Tray text takes its colour from the filament, so a white or black spool stays readable. An idle or offline printer shows an empty grey bar rather than the last job's full one.
+* `common.yaml` now always reports **Uptime** and **Reset Reason**, so an unexplained restart leaves evidence. `features/diagnostics/` adds opt-in heap, loop-time and PSRAM sensors for chasing a leak. See "Optional features".
+* [Breaking change] **Restart** is now a button rather than a switch, so Home Assistant shows it as an action instead of an on/off state. Its entity moves from `switch.<name>_restart` to `button.<name>_restart`; update any automation or dashboard that pressed the old one. Home Assistant removes the old switch by itself once the device reconnects.
+* [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
+* **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
 * Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
@@ -94,6 +101,8 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 ### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
 
+### `features/diagnostics/memory.yaml` and `features/diagnostics/psram.yaml`
+Sensors for chasing a leak or a slow crash: **Heap Free**, **Heap Min Free**, **Heap Largest Block** and **Loop Time**, plus **PSRAM Free** for boards with PSRAM (the Guition and the Sunton 4.3" / 5"). A leak shows as Free or Min Free trending down over hours; Largest Block falling while Free holds is fragmentation. Each reports once a minute, a recorder row a minute per sensor, so turn them on for the panel you are chasing a problem on rather than everywhere. Uptime and Reset Reason are always on, in `common.yaml`: the evidence for an unexplained restart can only be caught at the boot that follows it.
 ### `features/ble_proxy/ble_proxy.yaml`
 Makes the panel a [Bluetooth proxy](https://esphome.io/components/bluetooth_proxy/) for Home Assistant, relaying advertisements and lending connection slots, so HA's Bluetooth reaches the room the panel is in. The **Bluetooth proxy** switch starts and stops the whole Bluetooth stack without a reflash; `ble_proxy_default` (`ON` or `OFF`) sets its first value.
 
@@ -150,6 +159,34 @@ lvgl:
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.
 
+### How to show every AMS unit
+The demo tiles use `tile_combined.yaml`, which puts the printer name and one AMS unit's four trays on a single line. To show all of a printer's units instead, switch that tile's body to `tile.yaml` in `layouts/<WxH>/pages/printers.yaml`:
+
+```yaml
+- obj: # printer 1
+    <<: !include ../vars/printer_tile.yaml
+    layout:
+      <<: !include ../vars/printer_tile_layout.yaml
+    widgets: !include { file: ../../widgets/printers/tile.yaml, vars: {
+      uid: printer_1, name: 1 - Fred,
+      <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
+```
+
+and its sensor package, in the same file, to `printer.sensors.yaml`:
+
+```yaml
+printer_1_sensors: !include { file: ../../widgets/printers/printer.sensors.yaml, vars: {
+  uid: printer_1,
+  entity_id_prefix: p1s_1
+}}
+```
+
+Change both halves together; a mismatched pair fails at config time on the ids the wrong half cannot find. The two formats can sit side by side on one page.
+
+`tile.yaml` carries all twelve slots a printer can have (AMS units `1` to `4`, AMS HTs `128` and `129`), each hidden until its unit reports humidity. Every AMS reports humidity, so that doubles as "this unit is here". A slot whose entities do not exist never sends anything and stays hidden. A unit that stops reporting hides again, and moving an AMS to another printer needs no reflash. The heater icon is discovered the same way: a unit with no drying hardware has no `_drying` entity, so its icon stays blank.
+
+The cost is the slots you do not use: on a Guition `JC3248W535`, going from 4 enumerated rows to 12 slots across two printers took RAM from 41.2% to 44.0% and flash from 18.7% to 19.3%. Empty slots are silent at boot, since Home Assistant sends nothing for an entity that does not exist.
+
 ## Todo
 This readme isn't finished. I'll be elaborating on some more techniques being used in here, such as the modularization of the widgets using `!include` and how the stateful widget files relate to their sensor counterparts (tip, just make sure to pass the same `uid` and `entity_id` when including a widget and when including the related widget sensor).
 
@@ -162,7 +199,7 @@ These look better in real life, I promise! I took these photos in low-light and 
 
 3.5" 320x480 portrait (Guition JC3248W535)  
 ![Lighting Page](media/guition_3.5_lighting.jpg "Lighting Page")
-![Printers Page](media/guition_3.5_printers.jpg "Printers Page")  
+![Printers Page](media/guition_3.5_printers_ams.jpg "Printers Page")  
 
 3.5" 320x480 portrait (Elecrow DIS05035H)  
 ![Lighting Page](media/elecrow_3.5_lighting.jpg "Lighting Page")

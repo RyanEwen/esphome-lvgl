@@ -1,0 +1,8 @@
+# Printer tile container. Merge alongside printer_tile_layout.yaml, which
+# supplies the `layout:` block.
+width: 100%
+height: SIZE_CONTENT
+border_width: 0
+bg_color: 0x5A6173
+text_font: roboto_sm
+# pad_all: 5 # RESOLUTION-SPECIFIC

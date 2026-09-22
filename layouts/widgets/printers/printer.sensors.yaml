@@ -1,0 +1,21 @@
+# Every sensor package one printer needs: the core status/progress sensors plus
+# all twelve AMS slots -- units 1-4 and the AMS HTs at 128/129.
+#
+# A slot whose entities do not exist simply never reports, so its row stays
+# hidden and it subscribes to nothing. That is what lets one file serve every
+# printer regardless of how many units it actually has, and what lets a unit
+# move between machines without a reflash.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+
+packages:
+  core: !include sensors_core.yaml
+
+  ams_1: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "1", variant: "" } }
+  ams_2: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "2", variant: "" } }
+  ams_3: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "3", variant: "" } }
+  ams_4: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "4", variant: "" } }
+  ams_128: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "128", variant: "_single" } }
+  ams_129: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "129", variant: "_single" } }
