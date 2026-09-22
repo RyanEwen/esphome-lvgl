@@ -28,9 +28,10 @@ script:
                   }
                   auto end = ESPTime::from_epoch_local(now.timestamp + (time_t) (hours * 3600.0f));
                   char buf[16];
-                  end.strftime(buf, sizeof(buf), "%I:%M %p");
+                  bool h24 = id(clock_24h).state;
+                  end.strftime(buf, sizeof(buf), h24 ? "%H:%M" : "%I:%M %p");
                   std::string formatted = buf;
-                  if (!formatted.empty() && formatted[0] == '0') {
+                  if (!h24 && !formatted.empty() && formatted[0] == '0') {
                     formatted.erase(0, 1);
                   }
                   return formatted;

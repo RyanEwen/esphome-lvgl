@@ -20,6 +20,10 @@
 * [Breaking change] `widgets/printers/widget.yaml` and `widgets/printers/sensors.yaml` are replaced. A page that included them switches the tile body to `widgets/printers/tile_combined.yaml` and its sensors to `widgets/printers/printer_combined.sensors.yaml`; the printers page in each layout shows the shape. The tile looks the same as before.
 * A printer tile can instead use `widgets/printers/tile.yaml` with `printer.sensors.yaml`: one row per AMS unit, with humidity and a heater icon, and rows that appear and disappear with the hardware. See "How to show every AMS unit".
 * Tray text takes its colour from the filament, so a white or black spool stays readable. An idle or offline printer shows an empty grey bar rather than the last job's full one.
+* Add `features/sleep_clock/sleep_clock.yaml`: a dim split-flap clock in place of the dark sleep, with its own brightness and optional red night colours. Needs `features/idle/idle.yaml`. See "Optional features".
+* A **24-hour time** switch (in the shared header package) sets the header clock, the sleep clock and the printer end times.
+* Every layout's `lvgl:` block now has `id: main_lvgl`, for features that need the LVGL component itself.
+* ESPHome 2026.9.0's bundled LVGL 9.5.0 leaks memory for every frame that draws an object scaled to 0 (fixed in LVGL 9.6.0; esphome/esphome#19439). If you animate `transform_scale_x/y`, hide the object while its scale is 0.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -95,6 +99,17 @@ Dims the backlight, returns to the home page, and sleeps after the panel has bee
 
 ### `features/idle/sun.yaml` and `features/idle/ambient_light.yaml`
 The brightness ceiling that the dim and wake levels are relative to, in three bands: day 100%, dusk 60%, night 35%. `sun.yaml` uses Home Assistant's `sun.sun` elevation, for boards with no light sensor. `ambient_light.yaml` is for boards that have one: it needs a sensor with `id: ambient_light` reporting lux in the device file. Use one or neither; without one the ceiling stays at 100%.
+
+### `features/sleep_clock/sleep_clock.yaml`
+A dim split-flap clock in place of the dark sleep, whether the sleep comes from the idle timer, holding the home button or **Sleep now**. Turn it on with the **Sleep clock** switch; **Sleep clock brightness** sets how bright it is, as a percentage of the ceiling. **Night colours** (At night / Always / Never) turns the face red, where "at night" follows `sun.yaml` or `ambient_light.yaml`. A touch returns to the page the clock replaced. Needs `features/idle/idle.yaml`, listed before it.
+
+The card sizes default to the 320px-wide canvas of the 3.5" boards. For the others, set these substitutions in the top-level config (the matching examples carry them, commented out):
+
+| Layout | `sleep_clock_card_width` | `_card_height` | `_card_gap` | `_pair_gap` | `_digit_size` |
+| --- | --- | --- | --- | --- | --- |
+| `320x240` | 50 | 84 | 4 | 12 | 66 |
+| `480x320` | 68 (default) | 112 | 6 | 16 | 88 |
+| `800x480` | 102 | 168 | 8 | 24 | 132 |
 
 ## How-tos
 ### How to choose which pages a device shows

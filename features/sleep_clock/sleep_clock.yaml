@@ -1,0 +1,208 @@
+# A dim split-flap clock in place of the dark sleep. Opt in from a top-level
+# config, after `layout:` and the idle feature:
+#
+#   packages:
+#     ...
+#     idle: !include features/idle/idle.yaml
+#     ceiling: !include features/idle/sun.yaml      # optional: night colours
+#     sleep_clock: !include features/sleep_clock/sleep_clock.yaml
+#
+# Needs features/idle/idle.yaml, whose sleep -- the timer, the Home hold and
+# "Sleep now" -- it takes over while the Sleep clock switch is on, by
+# registering a sleep_handler. Needs from the layout: `main_lvgl`, `ha_time`,
+# `clock_24h`, and the header/footer ids `titlebar` / `navbar`.
+#
+# It brings its own page. That is safe because layouts go home from on_boot,
+# not from whichever page happens to be first; list it after `layout:` anyway,
+# so `splash` stays the page shown for the instant before that.
+#
+# Sizes default to a 320px-wide canvas; override them in the top-level
+# substitutions for a wider one. Cards must fit: 4 * width + 2 * card_gap +
+# pair_gap + 4 (the outline's room) <= the canvas width.
+
+substitutions:
+  sleep_clock_card_width: "68"
+  sleep_clock_card_height: "112"
+  sleep_clock_card_gap: "6"
+  sleep_clock_pair_gap: "16"
+  sleep_clock_digit_size: "88"
+  sleep_clock_brightness: "10" # percent of the ceiling
+
+esphome:
+  includes:
+    - flip_clock.h # split-flap card animation
+  on_boot:
+    - priority: -100
+      then:
+        # take over the idle feature's sleep while the switch is on
+        - lambda: |-
+            id(sleep_handler) = [](const std::string &reason) {
+              if (!id(sleep_clock_enabled).state) {
+                return false;  // idle goes dark as usual
+              }
+              id(sleep_clock_show).execute(reason);
+              return true;
+            };
+
+lvgl:
+  pages:
+    - id: sleep_clock
+      <<: !include { file: page.yaml, vars: {
+        card_width: "${sleep_clock_card_width}", card_height: "${sleep_clock_card_height}",
+        card_gap: "${sleep_clock_card_gap}", pair_gap: "${sleep_clock_pair_gap}" }}
+
+font:
+  - id: flip_digits
+    file:
+      type: gfonts
+      family: Roboto Condensed
+      weight: bold
+    size: ${sleep_clock_digit_size}
+    glyphs: "0123456789"
+    bpp: 4
+
+globals:
+  - id: sleep_clock_origin # page index to return to
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: sleep_clock_red # the palette on screen: -1 not yet applied, 0 day, 1 night
+    type: int
+    restore_value: false
+    initial_value: '-1'
+
+# Red at night: the LCD passes only the red part of the white backlight through
+# red pixels, and red is what disturbs dark-adapted eyes least. Everything on
+# the face turns, or the outline and date would be the bluest things left.
+select:
+  - id: sleep_clock_night_colours
+    platform: template
+    name: Night colours
+    icon: mdi:weather-night
+    entity_category: config
+    options:
+      - At night # whatever the ceiling feature calls night; never without one
+      - Always
+      - Never
+    initial_option: At night
+    optimistic: true
+    restore_value: true
+
+switch:
+  - id: sleep_clock_enabled
+    platform: template
+    name: Sleep clock
+    icon: mdi:clock-digital
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    # read at each sleep; a clock already showing stays up until touched
+
+number:
+  - id: sleep_clock_brightness
+    platform: template
+    name: Sleep clock brightness
+    icon: mdi:brightness-4
+    entity_category: config
+    unit_of_measurement: "%"
+    mode: slider
+    min_value: 1
+    max_value: 50
+    step: 1
+    initial_value: ${sleep_clock_brightness}
+    optimistic: true
+    restore_value: true
+    on_value:
+      # live while it is showing, so it can be tuned from the dark
+      - if:
+          condition:
+            - lambda: return id(sleep_clock)->is_showing();
+          then:
+            - script.execute: sleep_clock_backlight
+
+script:
+  - id: sleep_clock_show
+    parameters:
+      reason: std::string # idle / hold / HA
+    then:
+      # already up (put there by hand, then the idle timer fired): only the
+      # backlight is refreshed, or the origin would become the clock itself
+      - if:
+          condition:
+            - lambda: return !id(sleep_clock)->is_showing();
+          then:
+            - lambda: |-
+                id(sleep_clock_origin) = id(main_lvgl)->get_current_page();
+                id(idle_hold_page) = true;  // the go-home timer leaves it alone
+            - lvgl.page.show: sleep_clock
+            - script.execute: { id: sleep_note, event: !lambda 'return "clock (" + reason + ")";' }
+      - script.execute: sleep_clock_backlight
+
+  - id: sleep_clock_backlight
+    then:
+      # relative to the ceiling, so night is dimmer than day
+      - light.turn_on:
+          id: backlight
+          brightness: !lambda return id(active_brightness) * id(sleep_clock_brightness).state / 100.0f;
+
+  - id: sleep_clock_refresh
+    parameters:
+      animate: bool
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          if (!now.is_valid()) {  // no time from HA yet
+            for (auto *card : {id(sleep_clock_h1), id(sleep_clock_h2), id(sleep_clock_m1), id(sleep_clock_m2)}) {
+              flip::set(card, "", false);
+            }
+            lv_label_set_text(id(sleep_clock_ampm), "");
+            lv_label_set_text(id(sleep_clock_date), "");
+            return;
+          }
+          bool h24 = id(clock_24h).state;
+          int hour = h24 ? now.hour : (now.hour + 11) % 12 + 1;
+          char hh[3], mm[3];
+          snprintf(hh, sizeof(hh), "%02d", hour);
+          snprintf(mm, sizeof(mm), "%02d", now.minute);
+          // a 12-hour clock shows 9:41 on a blank card, not 09:41
+          std::string h1 = (!h24 && hh[0] == '0') ? "" : std::string(1, hh[0]);
+          flip::set(id(sleep_clock_h1), h1.c_str(), animate);
+          flip::set(id(sleep_clock_h2), std::string(1, hh[1]).c_str(), animate);
+          flip::set(id(sleep_clock_m1), std::string(1, mm[0]).c_str(), animate);
+          flip::set(id(sleep_clock_m2), std::string(1, mm[1]).c_str(), animate);
+          lv_label_set_text(id(sleep_clock_ampm), h24 ? "" : (now.hour < 12 ? "AM" : "PM"));
+          std::string date = now.strftime("%A, %B ") + std::to_string(now.day_of_month);
+          lv_label_set_text(id(sleep_clock_date), date.c_str());
+      - script.execute: sleep_clock_colours
+
+  - id: sleep_clock_colours
+    then:
+      - lambda: |-
+          auto mode = id(sleep_clock_night_colours).current_option();
+          int red = mode == "Always" || (mode == "At night" && id(ambient_night));
+          if (red == id(sleep_clock_red)) {
+            return;  // restyling invalidates the whole face; only do it on a change
+          }
+          id(sleep_clock_red) = red;
+          // night: 4.1:1 digit on card, 4.5:1 outline and 3.4:1 date on black
+          uint32_t ink = red ? 0xD04028 : 0xD8D8D8;
+          uint32_t face = red ? 0x1A0A08 : 0x1E2024;
+          uint32_t edge = red ? 0xD04028 : 0xFFFFFF;
+          uint32_t text = red ? 0xB03828 : 0x9AA0AE;
+          for (auto *card : {id(sleep_clock_h1), id(sleep_clock_h2), id(sleep_clock_m1), id(sleep_clock_m2)}) {
+            flip::set_colors(card, ink, face, edge);
+          }
+          lv_obj_set_style_text_color(id(sleep_clock_ampm), lv_color_hex(text), 0);
+          lv_obj_set_style_text_color(id(sleep_clock_date), lv_color_hex(text), 0);
+
+interval:
+  # every second rather than on the minute: flip::set is a no-op for a card
+  # that has not changed, and this also picks up a 12/24-hour switch or the
+  # first time sync without either having to know the clock exists
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            - lambda: return id(sleep_clock)->is_showing();
+          then:
+            - script.execute: { id: sleep_clock_refresh, animate: true }

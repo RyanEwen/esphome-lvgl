@@ -4,6 +4,12 @@ esphome:
 
 substitutions:
   home_page: lighting_1
+  # the sleep clock sized for this canvas -- uncomment with sleep_clock below
+  # sleep_clock_card_width: "102"
+  # sleep_clock_card_height: "168"
+  # sleep_clock_card_gap: "8"
+  # sleep_clock_pair_gap: "24"
+  # sleep_clock_digit_size: "132"
 
 packages:
   common: !include common.yaml
@@ -17,3 +23,4 @@ packages:
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun
+  # sleep_clock: !include features/sleep_clock/sleep_clock.yaml  # a split-flap clock instead of going dark; needs idle

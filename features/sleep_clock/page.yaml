@@ -1,0 +1,91 @@
+# The sleep clock: four split-flap cards in one row, the date beneath, and the
+# AM/PM mark above the first card in 12-hour mode. Shown only by
+# sleep_clock_show, never by prev/next; any touch goes back to the page it
+# replaced. Included by sleep_clock.yaml.
+#
+# required vars:
+# - card_width
+# - card_height
+# - card_gap  -- between the two cards of a pair
+# - pair_gap  -- between hours and minutes, where a colon would be
+
+# - id: sleep_clock
+  skip: true
+  bg_color: 0x000000
+  pad_all: 0
+  scrollable: false
+  on_load:
+    # the header and footer live on top_layer, which draws over every page
+    - lvgl.widget.hide: [titlebar, navbar]
+    - script.execute: { id: sleep_clock_refresh, animate: false }
+  on_unload:
+    - lvgl.widget.show: [titlebar, navbar]
+    - lambda: id(idle_hold_page) = false;
+  on_press:
+    # drop the rest of this touch, or its release would land on whatever the
+    # page underneath has at that spot
+    - lambda: lv_indev_wait_release(lv_indev_active());
+    - script.execute: { id: sleep_note, event: "woken (touch)" }
+    - lambda: id(main_lvgl)->show_page(id(sleep_clock_origin), LV_SCREEN_LOAD_ANIM_NONE, 0);
+  widgets:
+    - obj: # as wide as the row of cards, so the AM/PM line starts where they do
+        align: CENTER
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
+          pad_row: 8
+        widgets:
+          - label:
+              id: sleep_clock_ampm
+              width: 100%
+              text: ""
+              text_font: roboto_sm
+              text_color: 0x9AA0AE
+          - obj:
+              width: SIZE_CONTENT
+              height: SIZE_CONTENT
+              bg_opa: TRANSP
+              border_width: 0
+              pad_all: 0
+              clickable: false
+              scrollable: false
+              layout:
+                type: FLEX
+                flex_flow: ROW
+                pad_column: ${pair_gap}
+              widgets:
+                - obj: # hours
+                    <<: &sleep_clock_pair # the pair's styling, shared with minutes
+                      width: SIZE_CONTENT
+                      height: SIZE_CONTENT
+                      bg_opa: TRANSP
+                      border_width: 0
+                      pad_all: 1 # room for the cards' outline, which a parent would clip
+                      clickable: false
+                      scrollable: false
+                      layout:
+                        type: FLEX
+                        flex_flow: ROW
+                        pad_column: ${card_gap}
+                    widgets:
+                      - obj: !include { file: card.yaml, vars: { uid: sleep_clock_h1 } }
+                      - obj: !include { file: card.yaml, vars: { uid: sleep_clock_h2 } }
+                - obj: # minutes
+                    <<: *sleep_clock_pair
+                    widgets:
+                      - obj: !include { file: card.yaml, vars: { uid: sleep_clock_m1 } }
+                      - obj: !include { file: card.yaml, vars: { uid: sleep_clock_m2 } }
+          - label:
+              id: sleep_clock_date
+              text: ""
+              text_font: roboto_md
+              text_color: 0x9AA0AE

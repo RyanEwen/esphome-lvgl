@@ -1,0 +1,93 @@
+# One split-flap card. flip_clock.h finds these children by index -- keep the
+# order in step with the table at the top of that file.
+#
+# required vars:
+# - uid
+# - card_width
+# - card_height
+
+# obj:
+  id: ${uid}
+  width: ${card_width}
+  height: ${card_height}
+  bg_opa: TRANSP
+  border_width: 0
+  radius: 12
+  pad_all: 0
+  # the only edge between a dark card and a black page. An outline, not a
+  # border: it draws outside the card, so the halves keep the full card and
+  # the digit still splits exactly at the hinge. Needs 1px of room in the parent.
+  outline_width: 1
+  outline_color: 0xFFFFFF
+  outline_pad: 0
+  clickable: false
+  scrollable: false
+  widgets:
+    - obj: # 0 top half
+        <<: &flip_half # neither draws a theme style nor catches a touch
+          bg_color: 0x1E2024
+          bg_opa: COVER
+          border_width: 0
+          radius: 12
+          pad_all: 0
+          width: 100%
+          height: 50%
+          clickable: false
+          scrollable: false
+        align: TOP_MID
+        widgets:
+          - obj:
+              <<: &flip_face # full card height, so one centred label splits at the hinge
+                bg_opa: TRANSP
+                border_width: 0
+                radius: 0
+                pad_all: 0
+                width: 100%
+                height: ${card_height}
+                clickable: false
+                scrollable: false
+              align: TOP_MID
+              widgets:
+                - label: &flip_label
+                    align: CENTER
+                    text: ""
+                    text_font: flip_digits
+                    text_color: 0xD8D8D8
+    - obj: # 1 bottom half
+        <<: *flip_half
+        align: BOTTOM_MID
+        widgets:
+          - obj:
+              <<: *flip_face
+              align: BOTTOM_MID
+              widgets:
+                - label: *flip_label
+    - obj: # 2 upper flap
+        <<: *flip_half
+        align: TOP_MID
+        hidden: true
+        widgets:
+          - obj:
+              <<: *flip_face
+              align: TOP_MID
+              widgets:
+                - label: *flip_label
+    - obj: # 3 lower flap
+        <<: *flip_half
+        align: BOTTOM_MID
+        hidden: true
+        widgets:
+          - obj:
+              <<: *flip_face
+              align: BOTTOM_MID
+              widgets:
+                - label: *flip_label
+    - obj: # 4 hinge
+        align: LEFT_MID
+        width: 100%
+        height: 3
+        bg_color: 0x000000
+        bg_opa: COVER
+        border_width: 0
+        radius: 0
+        clickable: false
