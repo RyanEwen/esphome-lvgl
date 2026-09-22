@@ -11,6 +11,8 @@
 * Elecrow CrowPanel `DIS05035H` (v2.2) 3.5" 320x480 portrait, with resistive touch and USB-C. [Manufacturer's Link](https://www.elecrow.com/esp32-display-3-5-inch-hmi-display-spi-tft-lcd-touch-screen.html).
 
 ## Changelog
+### 2026-09-22
+* Add `tools/`: `lint_configs.py`, `check_glyphs.py`, `compare_configs.py` and `snapshot.py`, for catching config mistakes that build fine but misbehave on the panel. No config changes. See "Testing tools".
 ### 2026-09-21
 * Add `devices/ESP32-2432S028-9342.yaml` and `sunton-28-9342-example.yaml`, for the USB-C + micro-B CYD with an ILI9342 panel. It includes `ESP32-2432S028R.yaml` and changes only the panel: ESPHome's own `ESP32-2432S028-9342` display model in RGB order, `lvgl: rotation: 270`, and the touch transform and calibration to match.
 * Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
@@ -72,6 +74,8 @@ Each layout is split by resolution:
 * `layouts/<WxH>/pages/<page>.yaml` - one page and the sensors its tiles need, as a package. The top-level config lists the ones it wants, after `layout:`, in navigation order.
 * `layouts/<WxH>/all.yaml` - every page for that resolution, for a config that wants them all.
 * `layouts/<WxH>/vars/` - the sizing the pages share (page padding, button sizes, and so on).
+
+`tools/` has scripts that check configs before you flash them; see "Testing tools".
 
 ## Advanced YAML Techniques
 Aside from the Packages feature used to separate device-specfic YAML from common YAML config, there are some other potentially unfamiliar techniques in use here. For example, the files within `layouts/` use [YAML anchors and aliases](https://ref.coddy.tech/yaml/yaml-anchors) which help reduce code duplication. I use anchors and aliases instead of `style_definitions` and `styles` as anchors can be used on anything instead of being restricted to just styles, and because they override `theme` settings when used (there is a bug or perhaps odd design choice that prevent `styles` from overriding `theme`). I define most of my anchors within a made-up section called `.sizing` because top-level sections prefixed with a period do not cause errors when parsed by ESPHome. 
@@ -234,6 +238,20 @@ Change both halves together; a mismatched pair fails at config time on the ids t
 `tile.yaml` carries all twelve slots a printer can have (AMS units `1` to `4`, AMS HTs `128` and `129`), each hidden until its unit reports humidity. Every AMS reports humidity, so that doubles as "this unit is here". A slot whose entities do not exist never sends anything and stays hidden. A unit that stops reporting hides again, and moving an AMS to another printer needs no reflash. The heater icon is discovered the same way: a unit with no drying hardware has no `_drying` entity, so its icon stays blank.
 
 The cost is the slots you do not use: on a Guition `JC3248W535`, going from 4 enumerated rows to 12 slots across two printers took RAM from 41.2% to 44.0% and flash from 18.7% to 19.3%. Empty slots are silent at boot, since Home Assistant sends nothing for an entity that does not exist.
+
+## Testing tools
+Most mistakes in these configs build and flash without complaint and only show on the panel: a blank icon, a tile stuck on its unknown state, a page that moved. The scripts in `tools/` catch them from a checkout. They need Python 3 and the `esphome` command, run from the repo root, and resolve configs with `esphome config`, so a non-SDL config needs its `secrets.yaml`.
+
+**`tools/lint_configs.py [config.yaml ...]`** -- run it before flashing, and before opening a PR. With no arguments it checks every `*-example.yaml`. It fails on:
+* an undefined substitution. A `${var}` nobody set is only a warning in ESPHome, and the widget gets the literal text, so a tile included without its `entity_id` subscribes to `${entity_id}` and never updates.
+* an icon missing from the MDI font subset, which renders blank (below).
+* once page access is in use, a page under `layouts/*/pages/` that doesn't include `widgets/page_access.yaml` exactly once for its own id, or a `skip: true` page that does.
+
+**`tools/check_glyphs.py config.yaml ...`** -- the icon check on its own. The MDI fonts carry only the glyphs listed in `layouts/fonts/glyphs.yaml`, so an icon used but not listed renders blank with no build error, and one listed but never used is flash spent on nothing. It lists both. Unused glyphs are normal for a layout that shows only some pages. Run it when you add an icon.
+
+**`tools/compare_configs.py [--base REF] [-v] [config.yaml ...]`** -- run it when you change a layout, a widget or a shared vars file. It resolves each config at `REF` (default `main`, checked out in a temporary git worktree) and in your working tree, and reports whether it still resolves, whether its pages are the same and in the same order, and how many resolved lines were added and removed. `-v` prints the lines. A refactor that is meant to change nothing should show `+0 -0`.
+
+**`tools/snapshot.py config.yaml [-o DIR] [--all]`** -- run it to see a layout on a canvas you don't have a board for, or to make screenshots. It builds an SDL config (such as `sdl-example.yaml`) for the host with LVGL's snapshot support, shows each page in turn and writes `snapshots/<page>.png` with the header and footer on it. Nothing talks to Home Assistant, so tiles show their unknown state. `--all` includes `skip: true` pages. It needs SDL2, like the SDL example.
 
 ## Todo
 This readme isn't finished. I'll be elaborating on some more techniques being used in here, such as the modularization of the widgets using `!include` and how the stateful widget files relate to their sensor counterparts (tip, just make sure to pass the same `uid` and `entity_id` when including a widget and when including the related widget sensor).
