@@ -11,6 +11,7 @@
 
 ## Changelog
 ### 2026-09-21
+* Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
 * [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
 * Add `features/`, for behaviour a panel may or may not want, opted into from the top-level config. Device files stay hardware only and layouts stay pages only. See "Optional features".
@@ -144,6 +145,14 @@ lvgl:
     - id: !extend bedroom
       skip: true
 ```
+
+### How to add a thermostat or number tile
+`widgets/stepper/` is a tile with `-` and `+` either side of a value. Taps change the value on screen straight away, and one call goes to Home Assistant a second after the last tap, so a run of taps is one change rather than one each. A few seconds later the tile takes Home Assistant's value back, in case it clamped or refused it.
+
+* `stepper/climate/` sets a thermostat's target temperature and shows the room temperature beside its icon. The icon follows what the system is doing: a flame while heating, a snowflake while cooling, a fan while only the fan runs. The range comes from the thermostat; the `step` is a var (1 for Fahrenheit, 0.5 for Celsius is typical). A thermostat that is off, or in heat/cool with a high/low pair, has no single target, so the tile shows `--` and the buttons do nothing.
+* `stepper/number/` sets a `number` or `input_number`, with its range and step from the entity. `domain` is `number` or `input_number`; `unit` is shown after the value.
+
+As with the other tiles, include the widget on the page and its sensors package with the same `uid`. `layouts/<WxH>/pages/climate.yaml` has one of each, with placeholder entities; uncomment its line in your top-level config (or in `all.yaml`) and point it at your own. The tile's sizing is in `layouts/<WxH>/vars/stepper.yaml`. A name too long for the space left of the buttons ends in `...`, which on the 240px-wide `320x240` canvas starts at about six characters.
 
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.

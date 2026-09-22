@@ -1,0 +1,85 @@
+# Binds a stepper tile to a `number` or `input_number` entity. Its range and
+# step come from the entity's own min / max / step attributes, so the tile
+# cannot send a value Home Assistant would reject.
+#
+# required vars:
+# - uid
+# - entity_id
+# - domain # number or input_number -- both take <domain>.set_value
+# - unit # suffix on the value, "" for none
+
+globals:
+  - id: ${uid}_pending # what the tile shows: HA's value, or the taps not yet sent
+    type: float
+    restore_value: false
+    initial_value: NAN
+
+sensor:
+  - id: ${uid}_widget_sensor
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      # while taps are pending, HA's value is stale -- leave the tile alone
+      - if:
+          condition:
+            not:
+              script.is_running: ${uid}_nudge
+          then:
+            - globals.set:
+                id: ${uid}_pending
+                value: !lambda return x;
+            - script.execute: ${uid}_show
+  - id: ${uid}_min
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: min
+  - id: ${uid}_max
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: max
+  - id: ${uid}_step
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: step
+
+script:
+  - id: ${uid}_show
+    then:
+      - lvgl.label.update:
+          id: ${uid}_widget_value
+          text: !lambda |-
+            float v = id(${uid}_pending);
+            if (std::isnan(v))
+              return std::string("--");
+            char buf[24];
+            snprintf(buf, sizeof(buf), fmodf(v, 1.0f) != 0 ? "%.1f%s" : "%.0f%s", v, "${unit}");
+            return std::string(buf);
+  # restart: each tap cancels the pending send and starts the wait again, so
+  # only the last value goes out
+  - id: ${uid}_nudge
+    mode: restart
+    parameters:
+      steps: int
+    then:
+      - if:
+          condition:
+            lambda: return !std::isnan(id(${uid}_pending)) && !std::isnan(id(${uid}_step).state);
+          then:
+            - lambda: |-
+                float v = id(${uid}_pending) + steps * id(${uid}_step).state;
+                if (!std::isnan(id(${uid}_min).state)) v = std::max(v, id(${uid}_min).state);
+                if (!std::isnan(id(${uid}_max).state)) v = std::min(v, id(${uid}_max).state);
+                id(${uid}_pending) = v;
+            - script.execute: ${uid}_show
+            - delay: 1s
+            - homeassistant.action:
+                action: ${domain}.set_value
+                data:
+                  entity_id: ${entity_id}
+                  value: !lambda return to_string(id(${uid}_pending));
+            # then take HA's word for it, in case it clamped or refused the value
+            - delay: 3s
+            - globals.set:
+                id: ${uid}_pending
+                value: !lambda return id(${uid}_widget_sensor).state;
+            - script.execute: ${uid}_show
