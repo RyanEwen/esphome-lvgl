@@ -90,6 +90,8 @@ lvgl:
                       <<: !include ../vars/button.yaml
 
 packages:
+  living_room_access: !include { file: ../../widgets/page_access.yaml, vars: { page: living_room } }
+
   living_room_tv_widget_sensors: !include { file: ../../widgets/buttons/icon_buttons/stateful_sensors.yaml, vars: {
     uid: living_room_tv,
     entity_id: media_player.living_room_tv

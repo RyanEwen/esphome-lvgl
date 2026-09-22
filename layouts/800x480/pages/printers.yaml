@@ -73,6 +73,8 @@ lvgl:
                     <<: [!include ../vars/ams_row.yaml, !include ../vars/printer_bar.yaml] } }
 
 packages:
+  printers_access: !include { file: ../../widgets/page_access.yaml, vars: { page: printers } }
+
   printer_1_sensors: !include { file: ../../widgets/printers/printer_combined.sensors.yaml, vars: {
     uid: printer_1,
     entity_id_prefix: p1s_1
