@@ -28,6 +28,10 @@
 * [Breaking change] **WiFi Strength** is gone. It was WiFi Signal rescaled to a percentage, but it kept the dBm sensor's `signal_strength` device class, which Home Assistant only accepts in dB or dBm and warned about. Use WiFi Signal.
 * **Uptime** reports the boot time, once per boot, rather than a seconds count every minute. If it reads unavailable after the update, reload the device in Settings > Devices & services > ESPHome: Home Assistant keeps the old seconds unit on the existing entity and rejects the new value.
 * Add `features/ble_proxy/`: the panel as a Home Assistant Bluetooth proxy, with a switch to turn it off. Boards with PSRAM only; it costs ~95KB of internal RAM and some WiFi latency. See "Optional features".
+* Add `features/sleep_clock/sleep_clock.yaml`: a dim split-flap clock in place of the dark sleep, with its own brightness and optional red night colours. Needs `features/idle/idle.yaml`. See "Optional features".
+* A **24-hour time** switch (in the shared header package) sets the header clock, the sleep clock and the printer end times.
+* Every layout's `lvgl:` block now has `id: main_lvgl`, for features that need the LVGL component itself.
+* ESPHome 2026.9.0's bundled LVGL 9.5.0 leaks memory for every frame that draws an object scaled to 0 (fixed in LVGL 9.6.0; esphome/esphome#19439). If you animate `transform_scale_x/y`, hide the object while its scale is 0.
 ### 2026-09-17
 * Document that every supported board draws portrait, and that the files in `layouts/` are named for the panel's nominal landscape resolution rather than for the canvas LVGL draws on. No config changes; the device files were already correct.
 * [Breaking change] `common.yaml` now requires an encrypted API and OTA. Add an `api_encryption_key` to your `secrets.yaml` (Home Assistant shows a generated key when adding an ESPHome device, or see the [API docs](https://esphome.io/components/api/)), then reflash each device and enter the same key in Home Assistant. A device that is only reachable over OTA should be flashed before Home Assistant loses the connection to it.
@@ -117,6 +121,17 @@ It is not free, which is why it is a feature and off in the examples. Measured o
 * **WiFi:** WiFi and Bluetooth share one radio. Packet loss did not change, but the slowest replies got slower (p99 ping 1.0s to 2.5s). ESPHome's default scans continuously, which was worse again, so this feature listens 30ms in every 320ms instead. A panel with a weak WiFi signal feels this most.
 * **CPU:** ~2% of a core.
 * **Turning it off** hands most of the RAM back (the static ~23KB stays) and ends the radio sharing, but the heap stays fragmented until the next restart. Starting or stopping the stack pauses the screen for ~0.2s.
+
+### `features/sleep_clock/sleep_clock.yaml`
+A dim split-flap clock in place of the dark sleep, whether the sleep comes from the idle timer, holding the home button or **Sleep now**. Turn it on with the **Sleep clock** switch; **Sleep clock brightness** sets how bright it is, as a percentage of the ceiling. **Night colours** (At night / Always / Never) turns the face red, where "at night" follows `sun.yaml` or `ambient_light.yaml`. A touch returns to the page the clock replaced. Needs `features/idle/idle.yaml`, listed before it.
+
+The card sizes default to the 320px-wide canvas of the 3.5" boards. For the others, set these substitutions in the top-level config (the matching examples carry them, commented out):
+
+| Layout | `sleep_clock_card_width` | `_card_height` | `_card_gap` | `_pair_gap` | `_digit_size` |
+| --- | --- | --- | --- | --- | --- |
+| `320x240` | 50 | 84 | 4 | 12 | 66 |
+| `480x320` | 68 (default) | 112 | 6 | 16 | 88 |
+| `800x480` | 102 | 168 | 8 | 24 | 132 |
 
 ## How-tos
 ### How to choose which pages a device shows

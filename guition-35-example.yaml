@@ -24,3 +24,4 @@ packages:
   # memory: !include features/diagnostics/memory.yaml  # heap and loop-time sensors
   # psram: !include features/diagnostics/psram.yaml    # PSRAM free
   # ble_proxy: !include features/ble_proxy/ble_proxy.yaml  # Bluetooth proxy for HA -- see the README first
+  # sleep_clock: !include features/sleep_clock/sleep_clock.yaml  # a split-flap clock instead of going dark; needs idle
