@@ -21,3 +21,5 @@ packages:
   # optional features -- list them after layout:
   # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
   # ceiling: !include features/idle/sun.yaml     # brightness follows the sun
+  # memory: !include features/diagnostics/memory.yaml  # heap and loop-time sensors
+  # psram: !include features/diagnostics/psram.yaml    # PSRAM free

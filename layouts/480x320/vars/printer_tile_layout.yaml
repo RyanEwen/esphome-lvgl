@@ -1,0 +1,3 @@
+# 480x320: the column inside a printer tile.
+<<: !include ../../styles/printer_tile_layout.yaml
+pad_row: 3
