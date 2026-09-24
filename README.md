@@ -15,6 +15,7 @@
 * Add `tools/`: `lint_configs.py`, `check_glyphs.py`, `compare_configs.py` and `snapshot.py`, for catching config mistakes that build fine but misbehave on the panel. No config changes. See "Testing tools".
 ### 2026-09-21
 * Add `devices/ESP32-2432S028-9342.yaml` and `sunton-28-9342-example.yaml`, for the USB-C + micro-B CYD with an ILI9342 panel. It includes `ESP32-2432S028R.yaml` and changes only the panel: ESPHome's own `ESP32-2432S028-9342` display model in RGB order, `lvgl: rotation: 270`, and the touch transform and calibration to match.
+* Add `printers-on-a-diet` to `320x240`: a printers page cut down to fit a board without PSRAM, commented out in the 2.8" examples and `all.yaml`. It lists each printer's AMS units rather than using `tile.yaml`'s twelve self-revealing slots, which don't fit a board without PSRAM. `320x240`'s `text_sm` drops from 14 to 12 so `100%` fits a tray pill; only the printer tiles use it. See "Putting a low-memory panel on a diet".
 * Add stepper tiles, `[-] value [+]`: `widgets/stepper/climate/` for a thermostat's target temperature and `widgets/stepper/number/` for a `number` or `input_number`. Every layout has a Climate page with one of each, commented out in the examples and `all.yaml` so nothing changes until you opt in. See "How to add a thermostat or number tile".
 * [Breaking change] Each page is now its own file, `layouts/<WxH>/pages/<page>.yaml`, holding the page and the sensors its tiles need, and the top-level config lists the pages it wants in navigation order. A config that includes only `layout:` now gets no pages: copy the page lines from the matching `*-example.yaml`, or include `layouts/<WxH>/all.yaml` for every page. The sizing the pages share moved from the layout's `.sizing` anchors to `layouts/<WxH>/vars/`. See "How to choose which pages a device shows".
 * Light and light-group tiles no longer set the light to 1% on a long press; a hold was too easy to hit by accident on a wall panel, and on a group tile it dimmed every light in the group. To keep it on a tile, include `dim_on_hold.yaml` instead of `widget.yaml` from the same directory (`light_buttons/` or `light_group_buttons/`); the vars and the sensors package are unchanged.
@@ -207,6 +208,32 @@ Two things to know: `esphome upload` can no longer find the panel by name, so pa
 * `stepper/number/` sets a `number` or `input_number`, with its range and step from the entity. `domain` is `number` or `input_number`; `unit` is shown after the value.
 
 As with the other tiles, include the widget on the page and its sensors package with the same `uid`. `layouts/<WxH>/pages/climate.yaml` has one of each, with placeholder entities; uncomment its line in your top-level config (or in `all.yaml`) and point it at your own. The tile's sizing is in `layouts/<WxH>/vars/stepper.yaml`. A name too long for the space left of the buttons ends in `...`, which on the 240px-wide `320x240` canvas starts at about six characters.
+
+### Putting a low-memory panel on a diet
+The 2.8" CYD boards have 180KB of RAM, no PSRAM and 4MB of flash. Nothing warns at build time: a config that is too big compiles, flashes, and then crashes during boot, so the screen stays dark. It shows up on the serial log as `failed to create task`, `Failed to allocate` from LVGL, or an `abort()` while the Home Assistant sensors set up.
+
+To see how much room a panel has, add `features/diagnostics/memory.yaml` and watch **Heap Min Free**. Every failure below happened during setup, so a panel that boots and stays up for an hour has enough.
+
+What it took to fit a full personal layout on an ESP32-2432S028 (ILI9342): eight pages, two printers, the sleep clock and idle.
+
+| Build | Static RAM | HA subscriptions | Result |
+| --- | --- | --- | --- |
+| everything, twelve AMS slots per printer, 25% LVGL buffer | 48% | 104 | crash-loops in setup |
+| no printers page, no sleep clock | 41% | 64 | boots; 95KB free, 86KB at the lowest |
+| + printers with twelve slots | | | LVGL runs out of memory, watchdog reboot |
+| printers with only the real AMS units, + sleep clock | 46% | 104 | aborts growing the HA subscription list |
+| same, `buffer_size: 12%` | 46% | 104 | boots; 73KB free, 63KB at the lowest, 46ms loop |
+
+Ways to put a panel on a diet, biggest measured effect first:
+
+1. **A smaller LVGL draw buffer.** `lvgl: buffer_size: 12%` in the top-level config, instead of the device file's 25%. The buffer is one 38KB block taken early in setup; halving it left room for everything that allocates after. Full-screen redraws, like a page change, get a little slower.
+2. **List the AMS units a printer has**, as `320x240`'s `printers-on-a-diet` page does, rather than `tile.yaml`'s twelve slots. Each slot is a row of widgets plus tray, humidity and drying sensors.
+3. **Use the combined tile** (`tile_combined.yaml`) for a printer with one AMS. It is one line, and subscribes only to that unit's trays.
+4. **Count the Home Assistant sensors.** Each is a subscription and a sensor object, and attribute sensors (a light's brightness, a tray's colour and amount) add up.
+5. **Include only the pages a panel needs**, since each is one line in the top-level config.
+6. **Leave features off** that a panel can do without, and diagnostics except while chasing a problem.
+
+Not measured, so no promises: `minimum_chip_revision: "3.1"` under `esp32: framework: advanced:` makes a smaller binary on rev 3 chips, which ESPHome suggests at boot on the newer CYDs; turning off `web_server`; a quieter `logger`.
 
 ### How to dim and sleep the panel when it is idle
 Add `features/idle/idle.yaml` to the top-level config, and for a brightness ceiling, `features/idle/sun.yaml` or `features/idle/ambient_light.yaml`. See "Optional Features". The timeouts and the dim level are Home Assistant controls whose defaults you can set in YAML.

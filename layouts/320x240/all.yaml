@@ -10,3 +10,4 @@ packages:
   lighting_1: !include pages/lighting_1.yaml
   lighting_2: !include pages/lighting_2.yaml
   lighting_3: !include pages/lighting_3.yaml
+  # printers_on_a_diet: !include pages/printers-on-a-diet.yaml  # opt in: see "Putting a low-memory panel on a diet" in the README
