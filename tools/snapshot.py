@@ -93,10 +93,16 @@ def main():
     if "platform: sdl" not in resolved:
         sys.exit(f"{args.config} doesn't use the SDL display; snapshots need a host build")
     name = re.search(r"^esphome:\n(?:  .*\n)*?  name: (\S+)", resolved, re.M).group(1)
+    # only the pages under lvgl: -> pages:, not msgboxes or other id lists.
+    # `lvgl:` resolves to a list, so pages: sits at 4 spaces, its entries at 6.
+    pg = re.search(r"^ {2,4}pages:\n((?:(?: {6,}.*)?\n)*)", resolved, re.M)
+    block = pg.group(1) if pg else ""
     pages = []
-    for m in re.finditer(r"^      - id: (\w+)\n((?:        .*\n)*)", resolved, re.M):
+    for m in re.finditer(r"^      - id: (\w+)\n((?:        .*\n)*)", block, re.M):
         if m.group(1) != "splash" and (args.all or "skip: true" not in m.group(2)):
             pages.append(m.group(1))
+    if not pages:
+        sys.exit(f"{args.config}: found no pages under lvgl: pages:")
     boot_screen = re.search(r"^\s+id: boot_screen$", resolved, re.M) is not None
 
     out = (ROOT / args.out).resolve()
