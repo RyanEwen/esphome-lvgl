@@ -1,0 +1,9 @@
+# Demo: the Living Room's own page, opened from its room tile: its lights (the floor lamp
+# dims, from its chevron), the thermostat and the TV.
+
+packages:
+  - !include { file: ../../layouts/widgets/page.yaml, vars: { page: room_living_room, title: Living Room } }
+  - !include { file: ../../layouts/widgets/light.yaml, vars: { page: room_living_room, entity_id: light.living_room_ceiling, text: Ceiling } }
+  - !include { file: ../../layouts/widgets/dimmer.yaml, vars: { page: room_living_room, entity_id: light.living_room_floor_lamp, text: Floor Lamp } }
+  - !include { file: ../../layouts/widgets/thermostat.yaml, vars: { page: room_living_room, entity_id: climate.living_room } }
+  - !include { file: ../../layouts/widgets/tv.yaml, vars: { page: room_living_room, entity_id: media_player.living_room_tv } }

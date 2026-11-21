@@ -1,0 +1,29 @@
+# A cover (blind, garage door): tap opens or closes it.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: the entity, e.g. light.porch
+#   text:      its name on screen
+#   uid:       a unique id for its widgets (default: the entity id after the dot)
+#   width, height: default half the page wide, the tile height
+#   icon_open, icon_closed: MDI glyphs (layouts/fonts/glyphs.yaml)
+
+defaults:
+  uid: ${entity_id.split(".")[1]}
+  width: 49%
+  height: ${tile_height}
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - button:
+                  <<: !include
+                    file: parts/cover.yaml
+                    vars: { uid: "${uid}", entity_id: "${entity_id}", text: "${text}", width: "${width}", height: "${height}", icon_open: "${icon_open}", icon_closed: "${icon_closed}" }
+
+packages:
+  sensors: !include { file: parts/cover.sensors.yaml, vars: { uid: "${uid}", entity_id: "${entity_id}" } }

@@ -1,0 +1,78 @@
+# Sizes for a 480x800 portrait canvas (the 5" and 4.3" Suntons; LVGL rotates it onto the
+# 800x480 panel). Include before layouts/ui/base.yaml. See 320x480.yaml for the 3.5".
+substitutions:
+  screen_w: 480
+  screen_h: 800
+  # fonts (layouts/fonts/fonts.yaml)
+  text_sm: 26
+  text_md: 30
+  text_lg: 34
+  text_xl: 48
+  text_xxl: 64
+  icons_sm: 26
+  icons_md: 32
+  icons_lg: 40
+  icons_xl: 48
+  icons_xxl: 56
+  font_title: 24   # agenda event titles
+  font_detail: 19  # times, countdowns, rain chance
+  font_caps: 15    # FRI / NOV
+  font_day: 36     # agenda day number
+  font_icon_xs: 20
+  font_temp_xl: 104
+  font_weather_xl: 150
+  font_clock_xl: 112
+  # frame
+  header_height: 65
+  footer_height: 80
+  nav_padding: 8
+  gap: 10
+  tile_height: 100
+  button_height: 64  # TV controls, Done, the agenda gear
+  tab_icon_y: -12
+  tab_text_y: 16
+  # weather
+  wx_now_h: 230
+  wx_row_h: 60
+  wx_row_gap: 6
+  wx_pad: 16
+  wx_icon_x: 92
+  wx_drop_x: 132
+  wx_rain_x: 152
+  wx_lo_x: 190
+  wx_num_w: 52
+  wx_track_x: 252
+  wx_track_w: 120
+  # agenda
+  agenda_date_w: 62
+  # screensaver
+  ss_clock_y: 36
+  ss_time_x: -29
+  ss_ampm_x: 133
+  ss_ampm_y: 72   # AM/PM baseline level with the digits
+  ss_date_y: 132
+  ss_track_w: 180
+  ss_agenda_max_h: 420
+  ss_shadow: 3
+  tile_font: tile_text
+  tile_font_size: 27
+  room_zone_w: 88      # tiles with a chevron: its tap area, from the tile's right edge
+  room_divider_x: 16   # the divider, from that area's left edge
+  room_label_w: 58%    # the name, clear of the divider
+  sdl_width: 480  # for the desktop preview (devices/SDL.yaml)
+  sdl_height: 800
+  tab_font_size: 24
+  # printer tiles (widgets/printers): the AMS row must fit the tile, 48+5+85+5+287 = 430 of 436
+  printer_pad: 12
+  printer_row_gap: 6
+  printer_bar_h: 8
+  ams_label_w: 48
+  ams_hum_w: 85
+  ams_hum_value_w: 29
+  ams_strip_w: 287 # 4 trays of 68 and 3 gaps of 5
+  ams_tray_w: 68
+  ams_tray_h: 35
+  ams_tray_pad: 5
+  # steppers (widgets/stepper)
+  stepper_button_w: 64
+  stepper_value_w: 80

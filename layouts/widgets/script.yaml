@@ -1,0 +1,26 @@
+# Runs a Home Assistant script (anything script.turn_on starts). No state to show.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: the entity, e.g. light.porch
+#   text:      its name on screen
+#   uid:       a unique id for its widgets (default: the entity id after the dot)
+#   width, height: default half the page wide, the tile height
+#   icon:      an MDI glyph (layouts/fonts/glyphs.yaml), e.g. "\U000F0594"
+
+defaults:
+  uid: ${entity_id.split(".")[1]}
+  width: 49%
+  height: ${tile_height}
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - button:
+                  <<: !include
+                    file: parts/script.yaml
+                    vars: { uid: "${uid}", entity_id: "${entity_id}", text: "${text}", width: "${width}", height: "${height}", icon: "${icon}" }

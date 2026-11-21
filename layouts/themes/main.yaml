@@ -1,17 +1,17 @@
 obj:
-  bg_color: 0x42495A
+  bg_color: 0x2B2B2B
   text_color: 0xFFFFFF
 button:
-  bg_color: 0x5A6173
+  bg_color: 0x3C3C3C
   border_width: 0
   border_color: 0x00B6FF
-  radius: 20
+  radius: 10
   shadow_width: 0
 bar:
   bg_color: 0x111111
   text_color: 0xFFFFFF
 dropdown:
-  bg_color: 0x5A6173
+  bg_color: 0x3C3C3C
   text_color: 0xFFFFFF
   border_color: 0x00B6FF
   border_width: 1

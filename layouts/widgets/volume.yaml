@@ -1,0 +1,27 @@
+# Volume down and up for a media player, side by side; holding one keeps stepping.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: the media_player
+#   uid:       a unique id for its widgets (default: the entity id after the dot)
+#   height:    default a little under the tile height
+
+defaults:
+  uid: ${entity_id.split(".")[1]}
+  height: ${tile_height - 20}
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - button:
+                  <<: !include
+                    file: parts/volume_down.yaml
+                    vars: { uid: "${uid}_vol_down", entity_id: "${entity_id}", width: 49%, height: "${height}" }
+              - button:
+                  <<: !include
+                    file: parts/volume_up.yaml
+                    vars: { uid: "${uid}_vol_up", entity_id: "${entity_id}", width: 49%, height: "${height}" }

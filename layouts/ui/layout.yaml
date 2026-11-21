@@ -1,0 +1,14 @@
+# The panel layout: include this one file, after your board (boards/), then your own pages.
+#
+#   packages:
+#     common: !include common.yaml
+#     board: !include boards/sunton-50.yaml
+#     ui: !include layouts/ui/layout.yaml
+#     rooms: !include demo/pages.yaml   # or your own copy
+#
+# See docs/getting-started.md.
+
+packages:
+  base: !include base.yaml    # fonts, theme, header, tab bar, Home page list, pop-ups
+  main: !include main.yaml    # shared fonts and helpers, the settings you can override
+  pages: !include pages.yaml  # Weather, Agenda, screensaver, Settings

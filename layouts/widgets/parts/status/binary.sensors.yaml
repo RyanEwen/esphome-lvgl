@@ -1,0 +1,7 @@
+# Feeds status/binary.yaml from Home Assistant. Include as a package, once per tile.
+#
+# required vars:
+# - uid
+# - entity_id
+
+<<: !include ../base/stateful.sensors.yaml

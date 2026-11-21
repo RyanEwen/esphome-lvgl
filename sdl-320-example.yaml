@@ -1,0 +1,103 @@
+esphome:
+  name: sdl-320-example
+  friendly_name: Desktop preview (320x480)
+  # Sample weather, agenda and states, dated from today, so every page renders without
+  # Home Assistant. Render the pages to PNG with:  tools/snapshot.py sdl-320-example.yaml --all
+  on_boot:
+    - priority: -200
+      then:
+        - lambda: |-
+            auto now = id(ha_time).now();
+            const time_t t = now.is_valid() ? now.timestamp : 1780700000;  // a fixed day otherwise
+            auto day = [&](int i) { return ESPTime::from_epoch_local(t + i * 86400); };
+            auto upper = [](std::string s) { for (auto &c : s) c = toupper(c); return s; };
+
+            // weather now, and six days
+            lv_label_set_text(id(wx_now_icon), ui::weather_icon("partlycloudy"));
+            lv_obj_set_style_text_color(id(wx_now_icon), ui::weather_color("partlycloudy"), LV_PART_MAIN);
+            lv_label_set_text(id(wx_now_cond), ui::weather_label("partlycloudy").c_str());
+            lv_label_set_text(id(wx_now_temp), "18°");
+            lv_label_set_text(id(wx_now_humidity), "Humidity 55%");
+            const char *wx[] = {"partlycloudy|21|12|10", "sunny|24|13|0", "rainy|17|11|80",
+                                "cloudy|16|9|20", "sunny|22|10|0", "lightning-rainy|19|14|60"};
+            std::string forecast;
+            for (int i = 0; i < 6; i++)
+              forecast += (i == 0 ? std::string("Today") : day(i).strftime("%a")) + "|" + wx[i] + "\n";
+            ui::ForecastRow rows[] = {
+                {id(wx_row_0), id(wx_d0_day), id(wx_d0_icon), id(wx_d0_drop), id(wx_d0_rain), id(wx_d0_lo), id(wx_d0_track), id(wx_d0_fill), id(wx_d0_hi)},
+                {id(wx_row_1), id(wx_d1_day), id(wx_d1_icon), id(wx_d1_drop), id(wx_d1_rain), id(wx_d1_lo), id(wx_d1_track), id(wx_d1_fill), id(wx_d1_hi)},
+                {id(wx_row_2), id(wx_d2_day), id(wx_d2_icon), id(wx_d2_drop), id(wx_d2_rain), id(wx_d2_lo), id(wx_d2_track), id(wx_d2_fill), id(wx_d2_hi)},
+                {id(wx_row_3), id(wx_d3_day), id(wx_d3_icon), id(wx_d3_drop), id(wx_d3_rain), id(wx_d3_lo), id(wx_d3_track), id(wx_d3_fill), id(wx_d3_hi)},
+                {id(wx_row_4), id(wx_d4_day), id(wx_d4_icon), id(wx_d4_drop), id(wx_d4_rain), id(wx_d4_lo), id(wx_d4_track), id(wx_d4_fill), id(wx_d4_hi)},
+                {id(wx_row_5), id(wx_d5_day), id(wx_d5_icon), id(wx_d5_drop), id(wx_d5_rain), id(wx_d5_lo), id(wx_d5_track), id(wx_d5_fill), id(wx_d5_hi)},
+            };
+            ui::render_forecast(forecast, rows, 6, id(wx_now_hilo), 18.0f, id(wx_now_marker));
+
+            // the agenda: three calendars, a week of days (format: layouts/ui/ui.h)
+            const char *events[] = {"E|0|0|09:00 - 10:30|0|Soccer practice\n",
+                                    "E|1|0|All day|0|Grandma visiting\n",
+                                    "E|2|2|11:30 - 12:00|0|Team stand-up\nE|2|1|15:15 - 15:45|0|School pickup\n",
+                                    "E|3|0|18:00 - 19:00|0|Dentist\n", "E|4|1|All day|0|Field trip\n", ""};
+            std::string agenda = "C|calendar.family|Family\nC|calendar.school|School\nC|calendar.work|Work\n";
+            for (int i = 0; i < 6; i++) {
+              auto d = day(i);
+              auto sunday = ESPTime::from_epoch_local(t + (i - (d.day_of_week - 1)) * 86400);
+              agenda += "D|" + std::to_string(i) + "|" + upper(d.strftime("%a")) + "|" + std::to_string(d.day_of_month) +
+                        "|" + upper(d.strftime("%b")) + "|" + sunday.strftime("%Y%m%d") + "\n" + events[i];
+            }
+            ui::agenda_text() = agenda;  // kept for the screensaver, as a real reply would be
+            ui::render_agenda(id(agenda_list), agenda, ui::agenda_fonts());
+        # a few lights on, a TV playing, the weather now: what Home Assistant would send
+        - lambda: |-
+            for (auto *s : {id(living_room_lights_widget_sensor), id(bedroom_lights_widget_sensor), id(office_lights_widget_sensor), id(office_lamp_widget_sensor),
+                            id(living_room_floor_lamp_widget_sensor), id(bedroom_lamp_left_widget_sensor)})
+              s->publish_state(true);
+            for (auto *s : {id(kitchen_lights_widget_sensor), id(porch_light_widget_sensor), id(living_room_ceiling_widget_sensor),
+                            id(bedroom_ceiling_widget_sensor), id(bedroom_lamp_right_widget_sensor)})
+              s->publish_state(false);
+            id(office_lamp_brightness).publish_state(160);
+            id(living_room_floor_lamp_brightness).publish_state(110);
+            id(bedroom_lamp_left_brightness).publish_state(40);
+            id(bedroom_tv_title).publish_state("Nature Documentary");
+            id(bedroom_tv_state).publish_state("playing");
+            id(living_room_tv_state).publish_state("off");
+            id(wx_temperature).publish_state(18);
+            id(wx_condition).publish_state("partlycloudy");
+            // two printers: one printing, one done, with their AMS trays
+            id(p1s_print_status).publish_state("Running");
+            id(p1s_remaining_time).publish_state("1.5");
+            id(p1s_print_progress).publish_state(62);
+            id(x1c_print_status).publish_state("Finish");
+            id(x1c_print_progress).publish_state(100);
+            const char *colors[2][4] = {{"#FF6A13FF", "#FFFFFFFF", "#161616FF", "#0086D6FF"},
+                                        {"#C12E1FFF", "#F7D959FF", "#00AE42FF", "#8E9089FF"}};
+            const char *remain[4] = {"80", "35", "100", "60"};
+            text_sensor::TextSensor *trays[2][4][2] = {
+                {{id(p1s_ams_1_tray_1_color), id(p1s_ams_1_tray_1_remain)}, {id(p1s_ams_1_tray_2_color), id(p1s_ams_1_tray_2_remain)},
+                 {id(p1s_ams_1_tray_3_color), id(p1s_ams_1_tray_3_remain)}, {id(p1s_ams_1_tray_4_color), id(p1s_ams_1_tray_4_remain)}},
+                {{id(x1c_ams_1_tray_1_color), id(x1c_ams_1_tray_1_remain)}, {id(x1c_ams_1_tray_2_color), id(x1c_ams_1_tray_2_remain)},
+                 {id(x1c_ams_1_tray_3_color), id(x1c_ams_1_tray_3_remain)}, {id(x1c_ams_1_tray_4_color), id(x1c_ams_1_tray_4_remain)}}};
+            for (int p = 0; p < 2; p++)
+              for (int t = 0; t < 4; t++) {
+                trays[p][t][0]->publish_state(colors[p][t]);
+                trays[p][t][1]->publish_state(remain[t]);
+              }
+            // no idle screensaver in the preview: it would cover pages while they render
+            id(ss_after).make_call().set_value(0).perform();
+
+substitutions:
+  home_page: Rooms
+
+packages:
+  board: !include boards/sdl-320x480.yaml
+  ui: !include layouts/ui/layout.yaml
+  rooms: !include demo/pages.yaml
+
+# stand-ins for what the desktop doesn't have: Wi-Fi details for Settings
+text_sensor:
+  - { platform: template, id: net_ip, lambda: 'return {"192.168.1.50"};', update_interval: 60s }
+  - { platform: template, id: net_ssid, lambda: 'return {"Home Wi-Fi"};', update_interval: 60s }
+sensor:
+  - { platform: template, id: wifi_signal_strength, lambda: 'return 80.0f;', update_interval: 60s }
+http_request:
+  buffer_size_rx: !remove # ESP32-only (the screensaver's photo download)

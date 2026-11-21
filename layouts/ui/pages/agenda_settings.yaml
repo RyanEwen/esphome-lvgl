@@ -1,0 +1,56 @@
+# Agenda calendars: switch calendars on/off for this panel's Agenda.
+# Opened from the gear on the Agenda page; not part of page navigation (skip: true).
+# The choice is kept on the panel (agenda_hidden, restored across reboots); calendars
+# added to Home Assistant later start switched on. Part of layouts/ui/pages.yaml.
+
+lvgl:
+  pages:
+    - id: agenda_settings
+      skip: true
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Agenda calendars
+        - script.execute: { id: tab_select, page: agenda }
+        - lambda: |-
+            ui::render_agenda_settings(id(agenda_settings_list), &id(agenda_hidden), []() {},
+                                         id(agenda_settings_done));
+            if (ui::agenda_calendars().empty())
+              id(agenda_fetch).execute();  // the list comes with the first agenda reply
+      widgets:
+        - obj:
+            id: agenda_settings_list
+            width: 100%
+            height: 100%
+            bg_opa: TRANSP
+            border_width: 0
+            radius: 0
+            pad_top: 12
+            pad_bottom: 16
+            pad_left: 12
+            pad_right: 12
+            scrollable: true
+            scroll_dir: VER
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              flex_align_cross: CENTER # centres the Done button; rows are full width
+              pad_row: 8
+            widgets:
+              - label: { text: "Loading calendars...", text_font: text_detail, text_opa: 60% }
+              - button: # after the last calendar (render_agenda_settings keeps it last)
+                  id: agenda_settings_done
+                  width: ${(screen_w * 5) // 12}
+                  height: ${button_height}
+                  radius: 10
+                  bg_color: 0x1E6FD9
+                  shadow_width: 0
+                  margin_top: 8
+                  on_click:
+                    - lvgl.page.show: agenda # reloads the agenda with the new choice
+                  widgets:
+                    - label: { align: CENTER, text: Done, text_font: roboto_md }
+        - switch: # never shown: ESPHome only builds LVGL widget types the YAML uses, and the
+            hidden: true # rows above create switches from C++ (ui::render_agenda_settings)

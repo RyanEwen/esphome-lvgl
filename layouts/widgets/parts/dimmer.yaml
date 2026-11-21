@@ -1,0 +1,105 @@
+# A dimmable light's tile: tap toggles it; the chevron along the right edge opens the
+# brightness pop-up (layouts/ui/brightness_popup.yaml). Pair with dimmer.sensors.yaml (same vars).
+#
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  pad_left: 12 # room for the name beside the state bar
+  pad_right: 12
+  on_short_click:
+    # build-time proof that this tile's sensors package was included
+    - lambda: (void) id(${uid}_brightness);
+    - homeassistant.action:
+        action: light.toggle
+        # no brightness: it comes back at the level last set in the pop-up
+        data:
+          entity_id: ${entity_id}
+  widgets:
+    # the state: a bar down the left edge (see layouts/widgets/parts/base/icon_text_stateful.yaml)
+    - obj:
+        id: ${uid}_widget_unknown
+        align: LEFT_MID
+        x: -4
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 25%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+    - obj:
+        id: ${uid}_widget_on
+        align: LEFT_MID
+        x: -4
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFD700
+        bg_opa: COVER
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - obj:
+        id: ${uid}_widget_off
+        align: LEFT_MID
+        x: -4
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 80%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        text_font: ${tile_font}
+        align: LEFT_MID
+        x: 10 # past the state bar
+        width: ${room_label_w} # clear of the chevron
+        long_mode: DOT
+    - obj: # the brightness part: a divider and a chevron, its own tap target
+        align: RIGHT_MID
+        x: 12 # out to the tile's edge, past its padding
+        width: ${room_zone_w}
+        height: ${height}
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 0
+        pad_all: 0
+        scrollable: false
+        on_click:
+          - script.execute:
+              id: dimmer_open
+              entity: ${entity_id}
+              title: ${text}
+              brightness: !lambda 'return id(${uid}_widget_sensor).state ? id(${uid}_brightness).state : NAN;'
+        widgets:
+          - obj:
+              align: LEFT_MID
+              x: ${room_divider_x}
+              width: 1
+              height: 56%
+              bg_color: 0xFFFFFF
+              bg_opa: 15%
+              border_width: 0
+              pad_all: 0
+              clickable: false
+          - label:
+              align: CENTER
+              x: ${room_divider_x // 2}
+              text: "\U000F0142" # chevron-right
+              text_font: mdi_md
+              text_opa: 70%

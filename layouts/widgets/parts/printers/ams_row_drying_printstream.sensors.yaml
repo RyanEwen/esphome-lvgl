@@ -1,0 +1,17 @@
+# Heater indicator for one AMS unit, from the printstream integration: its AMS status
+# sensor reads "drying" while the unit dries (ams_row_drying.sensors.yaml is ha-bambulab's).
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+# - ams_id
+
+text_sensor:
+  - id: ${uid}_ams_${ams_id}_drying
+    platform: homeassistant
+    entity_id: sensor.${entity_id_prefix}_ams_${ams_id}_status
+    on_value:
+      - lvgl.label.update:
+          id: ${uid}_ams_${ams_id}_heater_icon
+          text: "\U000F1A45" # heat-wave: this unit can dry
+          text_color: !lambda 'return lv_color_hex(x == "drying" ? 0xFFD166 : 0xC3C9D6);' # yellow while drying

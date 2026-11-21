@@ -7,6 +7,10 @@ logger:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  fast_connect: true
+  # Default light power save batches incoming packets, adding latency and bursty frames
+  # for streamed displays (remote_webview, mjpeg_stream). These devices are mains powered.
+  power_save_mode: none
 
 web_server:
   port: 80
@@ -53,15 +57,26 @@ sensor:
     update_interval: 60s
     entity_category: diagnostic
 
+  - id: wifi_signal_strength # 0-100%, for the Settings page; not sent to Home Assistant
+    internal: true
+    platform: copy
+    source_id: wifi_signal_db
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"
+    entity_category: diagnostic
+
 text_sensor:
   - platform: debug
     reset_reason:
       name: Reset Reason
   - platform: wifi_info
     ip_address:
+      id: net_ip
       name: IP Address
       entity_category: diagnostic
     ssid:
+      id: net_ssid
       name: Connected SSID
       entity_category: diagnostic
     mac_address:

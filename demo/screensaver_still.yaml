@@ -1,0 +1,20 @@
+# Demo: a still photo for the screensaver, built into the firmware, so the demo shows one
+# without a photo server. For your own photos, use the photo-frame service instead
+# (screensaver_photos: "true"; see docs/getting-started.md). Or swap in your own picture:
+# change `file:`, keeping it near the screen's shape.
+#
+# The image is a photo by Andrew Ridley (https://unsplash.com/photos/Kt5hRENuotI),
+# from Unsplash, free to use under the Unsplash License.
+
+image:
+  - platform: file
+    id: demo_still
+    file: demo/screensaver.jpg
+    type: RGB565
+    resize: ${screen_w}x${screen_h}
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: id(ss_still) = id(demo_still)->get_lv_image_dsc();

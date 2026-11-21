@@ -1,0 +1,23 @@
+# A "Benchmark redraw" button: forces a full-screen LVGL redraw (render, any software
+# rotation, and the flush to the panel) five times and logs the average and worst time.
+# For tuning a board's display settings; opt in after `layout:`.
+
+button:
+  - platform: template
+    name: Benchmark redraw
+    icon: mdi:timer-outline
+    entity_category: diagnostic
+    on_press:
+      - lambda: |-
+          uint32_t total = 0, worst = 0;
+          for (int i = 0; i < 5; i++) {
+            const uint32_t t0 = millis();
+            lv_obj_invalidate(lv_screen_active());
+            lv_obj_invalidate(lv_layer_top());
+            lv_refr_now(nullptr);
+            const uint32_t dt = millis() - t0;
+            total += dt;
+            worst = std::max(worst, dt);
+          }
+          ESP_LOGI("bench", "full redraw: avg %u ms, worst %u ms (5 runs)", (unsigned) (total / 5),
+                   (unsigned) worst);

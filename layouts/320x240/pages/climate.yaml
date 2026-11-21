@@ -18,7 +18,7 @@ lvgl:
             widgets:
               - obj: # thermostat
                   <<: !include
-                    file: ../../widgets/stepper/climate/widget.yaml
+                    file: ../../widgets/parts/thermostat.yaml
                     vars:
                       uid: living_room_thermostat
                       text: Thermostat
@@ -26,7 +26,7 @@ lvgl:
 
               - obj: # fan speed
                   <<: !include
-                    file: ../../widgets/stepper/number/widget.yaml
+                    file: ../../widgets/parts/number.yaml
                     vars:
                       uid: bedroom_fan_speed
                       text: Fan
@@ -34,15 +34,15 @@ lvgl:
                       <<: !include ../vars/stepper.yaml
 
 packages:
-  climate_access: !include { file: ../../widgets/page_access.yaml, vars: { page: climate } }
+  climate_access: !include { file: ../../common/page_access.yaml, vars: { page: climate } }
 
-  living_room_thermostat_sensors: !include { file: ../../widgets/stepper/climate/sensors.yaml, vars: {
+  living_room_thermostat_sensors: !include { file: ../../widgets/parts/thermostat.sensors.yaml, vars: {
     uid: living_room_thermostat,
     entity_id: climate.living_room,
     step: 1
   }}
 
-  bedroom_fan_speed_sensors: !include { file: ../../widgets/stepper/number/sensors.yaml, vars: {
+  bedroom_fan_speed_sensors: !include { file: ../../widgets/parts/number.sensors.yaml, vars: {
     uid: bedroom_fan_speed,
     entity_id: input_number.bedroom_fan_speed,
     domain: input_number,

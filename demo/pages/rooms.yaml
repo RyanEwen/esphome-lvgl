@@ -1,0 +1,14 @@
+# Demo: the Rooms page, the first tab. A widget per room: tap toggles its lights. A room
+# with its own page (room.yaml) opens it from the chevron or a long press.
+#
+# A page file is a list of includes: widgets/page.yaml for the page, then one per widget,
+# each naming the page it goes on. A widget brings its own Home Assistant sensors.
+# docs/widgets.md lists them.
+
+packages:
+  - !include { file: ../../layouts/widgets/page.yaml, vars: { page: rooms, title: Rooms, skip: "false" } }
+  - !include { file: ../../layouts/widgets/room.yaml, vars: { page: rooms, entity_id: light.living_room_lights, text: Living Room, room: room_living_room } }
+  - !include { file: ../../layouts/widgets/light.yaml, vars: { page: rooms, entity_id: light.kitchen_lights, text: Kitchen } }
+  - !include { file: ../../layouts/widgets/room.yaml, vars: { page: rooms, entity_id: light.bedroom_lights, text: Bedroom, room: room_bedroom } }
+  - !include { file: ../../layouts/widgets/room.yaml, vars: { page: rooms, entity_id: light.office_lights, text: Office, room: room_office } }
+  - !include { file: ../../layouts/widgets/light.yaml, vars: { page: rooms, entity_id: light.porch_light, text: Porch } }

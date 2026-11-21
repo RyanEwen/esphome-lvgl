@@ -1,0 +1,93 @@
+# The brightness pop-up: a dimmed backdrop with a card holding the light's name, its
+# brightness, a 1-100% slider and an On/Off toggle. Lives on top_layer (ui/base.yaml), so
+# it opens over any page; dimmable tiles open it from their chevron (brightness_popup.logic.yaml).
+# Tapping the backdrop closes it.
+
+# obj:
+  id: dimmer_backdrop
+  width: 100%
+  height: 100%
+  bg_color: 0x000000
+  bg_opa: 55%
+  border_width: 0
+  radius: 0
+  pad_all: 0
+  hidden: true
+  scrollable: false
+  on_click:
+    - lvgl.widget.hide: dimmer_backdrop
+  widgets:
+    - obj:
+        id: dimmer_card
+        align: CENTER
+        width: ${screen_w - 6 * gap}
+        height: SIZE_CONTENT
+        bg_color: 0x2B2B2B
+        radius: 14
+        border_width: 0
+        pad_all: ${2 * gap}
+        scrollable: false
+        layout:
+          type: FLEX
+          flex_flow: COLUMN
+          pad_row: ${2 * gap}
+        widgets:
+          - obj:
+              width: 100%
+              height: SIZE_CONTENT
+              bg_opa: TRANSP
+              border_width: 0
+              pad_all: 0
+              scrollable: false
+              clickable: false
+              widgets:
+                - label: { id: dimmer_title, align: LEFT_MID, width: 75%, long_mode: DOT, text: " ", text_font: roboto_md }
+                - label: { id: dimmer_value, align: RIGHT_MID, text: " ", text_font: roboto_md, text_opa: 70% }
+          - obj: # inset, so the slider's ends are easy to reach
+              width: 100%
+              height: SIZE_CONTENT
+              bg_opa: TRANSP
+              border_width: 0
+              pad_left: ${3 * gap}
+              pad_right: ${3 * gap}
+              pad_top: ${gap}
+              pad_bottom: ${gap}
+              scrollable: false
+              clickable: false
+              widgets:
+                - slider:
+                    id: dimmer_slider
+                    width: 100%
+                    height: ${gap + 8}
+                    min_value: 1 # 1%, never 0: off is the button below
+                    max_value: 100
+                    value: 100
+                    bg_color: 0xFFFFFF
+                    bg_opa: 15%
+                    indicator:
+                      bg_color: 0xFFD700
+                    knob:
+                      bg_color: 0xFFFFFF
+                      pad_all: ${gap}
+                    on_value:
+                      - lambda: lv_label_set_text(id(dimmer_value), (std::to_string((int) x) + "%").c_str());
+                    on_release:
+                      - lambda: id(dimmer_set_on).execute(true);
+                      - homeassistant.action:
+                          action: light.turn_on
+                          data:
+                            entity_id: !lambda return id(dimmer_entity);
+                            brightness_pct: !lambda return std::to_string((int) x);
+          - button: # on/off toggle; the pop-up stays open
+              id: dimmer_toggle
+              width: 100%
+              height: ${button_height}
+              bg_color: 0x3C3C3C
+              on_click:
+                - lambda: id(dimmer_set_on).execute(!id(dimmer_on));
+                - homeassistant.action:
+                    action: !lambda 'return id(dimmer_on) ? "light.turn_on" : "light.turn_off";'
+                    data:
+                      entity_id: !lambda return id(dimmer_entity);
+              widgets:
+                - label: { id: dimmer_toggle_text, align: CENTER, text: "Off", text_font: roboto_md }

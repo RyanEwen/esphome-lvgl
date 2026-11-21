@@ -1,0 +1,21 @@
+# Demo house: the pages that are yours to write, for a made-up home. Copy this folder
+# (pages.yaml and pages/) to private/ -- ignored by git: cp -r demo private -- and change
+# the rooms and entity ids to yours. See docs/getting-started.md.
+#
+# Include it from a panel config after layouts/ui/pages.yaml:
+#   rooms: !include demo/pages.yaml
+
+packages:
+  # the Rooms tab (the first), and the pages its room tiles open
+  rooms: !include pages/rooms.yaml
+  room_living_room: !include pages/room_living_room.yaml
+  room_bedroom: !include pages/room_bedroom.yaml
+  room_office: !include pages/room_office.yaml
+
+  # a photo for the screensaver, built in (layouts/ui: screensaver_photos for real ones)
+  screensaver_still: !include screensaver_still.yaml
+
+  # the rooms a panel can auto-dim with (Settings): a light, or a group covering the room
+  dim_living_room: !include { file: ../layouts/ui/autodim_room.yaml, vars: { uid: living_room, label: Living Room, entity_id: light.living_room_lights } }
+  dim_kitchen: !include { file: ../layouts/ui/autodim_room.yaml, vars: { uid: kitchen, label: Kitchen, entity_id: light.kitchen_lights } }
+  dim_bedroom: !include { file: ../layouts/ui/autodim_room.yaml, vars: { uid: bedroom, label: Bedroom, entity_id: light.bedroom_lights } }

@@ -1,0 +1,18 @@
+# Base template (icon_stateless): not placed directly; the widgets in layouts/widgets/ build on it.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - icon
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  widgets:
+    - label:
+        id: ${uid}_widget_icon
+        text: ${icon}
+        text_font: mdi_lg
+        align: TOP_LEFT

@@ -1,0 +1,21 @@
+# Stand-in for cameras.yaml in SDL previews (tools/snapshot.py): the camera component
+# needs an ESP32, so the preview gets the page frame with grey boxes where video goes.
+
+lvgl:
+  pages:
+    - id: cameras
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C
+      pad_left: 0
+      pad_right: 0
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Cameras
+        - script.execute: { id: tab_select, page: cameras }
+      widgets:
+        - obj: { x: 0, y: 0, width: 100%, height: 270, bg_color: 0x101216, border_width: 0, radius: 0 }
+        - obj: { x: 0, y: 330, width: 100%, height: 270, bg_color: 0x101216, border_width: 0, radius: 0 }
+
+packages:
+  cameras_access: !include { file: ../home_page.yaml, vars: { page: cameras, label: "Cameras" } }

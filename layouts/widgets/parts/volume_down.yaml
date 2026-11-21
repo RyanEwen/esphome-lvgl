@@ -1,0 +1,26 @@
+# Volume down for a media player; holding it keeps stepping. No state, so no sensors file.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - entity_id
+
+# button:
+  <<: !include
+    file: base/icon_stateless.yaml
+    vars:
+      uid: ${uid}
+      width: ${width}
+      height: ${height}
+      icon: "\U000F075E"
+  on_short_click:
+    - homeassistant.action:
+        action: media_player.volume_down
+        data:
+          entity_id: ${entity_id}
+  on_long_press_repeat:
+    - homeassistant.action:
+        action: media_player.volume_down
+        data:
+          entity_id: ${entity_id}

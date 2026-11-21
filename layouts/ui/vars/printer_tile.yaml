@@ -1,0 +1,4 @@
+# A 3D-printer tile (widgets/printers): full width, its padding for this screen.
+<<: !include ../../styles/printer_tile.yaml
+radius: 10
+pad_all: ${printer_pad}

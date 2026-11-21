@@ -1,0 +1,11 @@
+# Demo: the Office's own page, opened from its room tile: its lights, and two 3D printers
+# with their progress, time left and AMS tray colours. prefix is the start of the printer's
+# entity ids (sensor.<prefix>_...). printer_combined.yaml suits a printer with one AMS;
+# printer.yaml shows any number. integration: printstream for that integration's printers.
+
+packages:
+  - !include { file: ../../layouts/widgets/page.yaml, vars: { page: room_office, title: Office, scroll: "true" } }
+  - !include { file: ../../layouts/widgets/light.yaml, vars: { page: room_office, entity_id: light.office_ceiling, text: Ceiling } }
+  - !include { file: ../../layouts/widgets/dimmer.yaml, vars: { page: room_office, entity_id: light.office_lamp, text: Desk Lamp } }
+  - !include { file: ../../layouts/widgets/printer_combined.yaml, vars: { page: room_office, prefix: p1s, text: P1S } }
+  - !include { file: ../../layouts/widgets/printer_combined.yaml, vars: { page: room_office, prefix: x1c, text: X1 Carbon } }

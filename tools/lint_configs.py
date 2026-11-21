@@ -12,14 +12,16 @@ For each config it runs `esphome config` once and reports:
 - missing MDI glyphs: an icon that isn't in the font subset renders blank
   (see tools/check_glyphs.py, which it uses).
 
-And once for the repo, if layouts/widgets/page_access.yaml exists:
+And once for the repo, if layouts/common/page_access.yaml exists:
 
-- page access: every page under layouts/*/pages/ includes page_access.yaml
+- page access: every page under layouts/*/pages/ includes common/page_access.yaml (the classic
+  layouts) or ui/home_page.yaml (the panel layout, and demo/pages/)
   exactly once, for its own id, and a `skip: true` page doesn't include it. A
   page without it is left out of the Home page select and has no Show switch.
 
 Exits 1 if anything is wrong.
 """
+import shutil
 import glob
 import re
 import subprocess
@@ -59,28 +61,43 @@ def lint_config(path, names):
 
 
 def lint_page_access():
-    if not (ROOT / "layouts/widgets/page_access.yaml").exists():
+    if not (ROOT / "layouts/common/page_access.yaml").exists():
         return True
     ok = True
-    for f in sorted(glob.glob(str(ROOT / "layouts/*/pages/*.yaml"))):
+    files = glob.glob(str(ROOT / "layouts/*/pages/*.yaml")) + glob.glob(str(ROOT / "demo/pages/*.yaml"))
+    for f in sorted(files):
         text = Path(f).read_text("utf-8")
         rel = Path(f).relative_to(ROOT)
         ids = re.findall(r"^    - id: (\w+)", text, re.M)
         if len(ids) != 1:
             continue  # not the one-page-per-file shape; nothing to check
         page, skip = ids[0], bool(re.search(r"^      skip: true", text, re.M))
-        grants = re.findall(r"widgets/page_access\.yaml,\s*vars:\s*\{\s*page:\s*(\w+)", text)
+        if "/ui/" in f or "/demo/" in f:
+            # the panel layout: each tab page is in the Home page list once (ui/home_page.yaml);
+            # a room page (skip: true) may be too
+            homes = re.findall(r"home_page\.yaml,\s*vars:\s*\{\s*page:\s*(\w+)", text)
+            if not skip and homes != [page]:
+                print(f"{rel}: expected one home_page.yaml include for `{page}`, found {homes or 'none'}")
+                ok = False
+            continue
+        grants = re.findall(r"common/page_access\.yaml,\s*vars:\s*\{\s*page:\s*(\w+)", text)
         if skip and grants:
-            print(f"{rel}: `skip: true` page includes page_access.yaml; it would get a Show switch")
+            print(f"{rel}: `skip: true` page includes layouts/common/page_access.yaml; it would get a Show switch")
             ok = False
         elif not skip and grants != [page]:
-            print(f"{rel}: expected one page_access.yaml include for `{page}`, found {grants or 'none'}")
+            print(f"{rel}: expected one layouts/common/page_access.yaml include for `{page}`, found {grants or 'none'}")
             ok = False
     return ok
 
 
 def main(argv):
     configs = argv or sorted(p.name for p in ROOT.glob("*-example.yaml"))
+    if not argv and shutil.which("sdl2-config") is None:
+        # the desktop previews need SDL2 to resolve; skip them rather than fail
+        skipped = [c for c in configs if c.startswith("sdl")]
+        configs = [c for c in configs if c not in skipped]
+        if skipped:
+            print(f"skipping {', '.join(skipped)}: SDL2 is not installed (sdl2-config)")
     names = check_glyphs.glyph_names()
     ok = lint_page_access()
     for c in configs:

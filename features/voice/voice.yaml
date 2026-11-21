@@ -1,0 +1,210 @@
+# Voice pop-up for a panel with a microphone: say "Okay Nabu" and a large card opens over
+# the page (the page dimmed behind it), a big faint microphone behind the text: it glows red
+# while listening, then shows what was heard and Assist's reply.
+# It gives up after 5 s with no speech, and closes 5 s after the request ends, or when
+# tapped. No button: the wake word starts every request.
+#
+# Brings the voice assistant and wake word itself; needs from the board a microphone
+# (main_microphone) and a media player (xl_media_player), as devices/JC4880P443C.yaml has,
+# and an Assist pipeline in Home Assistant (docs/getting-started.md, "Voice").
+# Include as a package.
+
+font:
+  - id: voice_mic # the big microphone behind the text
+    file: https://github.com/Pictogrammers/pictogrammers.github.io/raw/refs/heads/main/@mdi/font/7.4.47/fonts/materialdesignicons-webfont.ttf
+    size: ${screen_w // 2}
+    bpp: 4
+    glyphs: ["\U000F036C"]
+
+globals:
+  - { id: va_backdrop, type: lv_obj_t *, initial_value: nullptr }
+  - { id: va_card, type: lv_obj_t *, initial_value: nullptr }
+  - { id: va_icon, type: lv_obj_t *, initial_value: nullptr }
+  - { id: va_status, type: lv_obj_t *, initial_value: nullptr }
+  - { id: va_heard, type: lv_obj_t *, initial_value: nullptr }
+
+esphome:
+  on_boot:
+    - priority: -100 # after LVGL is set up
+      then:
+        - lambda: |-
+            // a dimmed backdrop over the whole screen; tapping anywhere closes the pop-up
+            lv_obj_t *back = lv_obj_create(lv_layer_top());
+            lv_obj_set_size(back, lv_pct(100), lv_pct(100));
+            lv_obj_set_style_bg_color(back, lv_color_black(), 0);
+            lv_obj_set_style_bg_opa(back, LV_OPA_50, 0);
+            lv_obj_set_style_border_width(back, 0, 0);
+            lv_obj_set_style_radius(back, 0, 0);
+            lv_obj_remove_flag(back, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_add_flag(back, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_event_cb(back, [](lv_event_t *) { id(va_hide).execute(); }, LV_EVENT_CLICKED, nullptr);
+
+            // the card: most of the screen, centred
+            lv_obj_t *card = lv_obj_create(back);
+            lv_obj_set_size(card, ${screen_w} - 4 * ${gap}, (${screen_h} * 3) / 5);
+            lv_obj_center(card);
+            lv_obj_set_style_bg_color(card, lv_color_hex(0x2B2B2B), 0);
+            lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
+            lv_obj_set_style_radius(card, 20, 0);
+            lv_obj_set_style_border_width(card, 0, 0);
+            lv_obj_set_style_pad_all(card, 3 * ${gap}, 0);
+            lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_add_flag(card, LV_OBJ_FLAG_EVENT_BUBBLE);  // a tap on the card closes it too
+
+            // the big microphone, faint, behind the text
+            lv_obj_t *icon = lv_label_create(card);
+            lv_label_set_text(icon, "\U000F036C");
+            lv_obj_set_style_text_font(icon, id(voice_mic)->get_lv_font(), 0);
+            lv_obj_set_style_text_opa(icon, LV_OPA_20, 0);
+            lv_obj_center(icon);
+
+            // the text, centred over it
+            lv_obj_t *col = lv_obj_create(card);
+            lv_obj_set_size(col, lv_pct(100), LV_SIZE_CONTENT);
+            lv_obj_center(col);
+            lv_obj_set_style_bg_opa(col, LV_OPA_TRANSP, 0);
+            lv_obj_set_style_border_width(col, 0, 0);
+            lv_obj_set_style_pad_all(col, 0, 0);
+            lv_obj_set_style_pad_row(col, 2 * ${gap}, 0);
+            lv_obj_set_flex_flow(col, LV_FLEX_FLOW_COLUMN);
+            lv_obj_set_flex_align(col, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+            lv_obj_remove_flag(col, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_remove_flag(col, LV_OBJ_FLAG_SCROLLABLE);
+
+            lv_obj_t *status = lv_label_create(col);
+            lv_obj_set_width(status, lv_pct(100));
+            lv_label_set_long_mode(status, LV_LABEL_LONG_WRAP);
+            lv_obj_set_style_text_align(status, LV_TEXT_ALIGN_CENTER, 0);
+            lv_obj_set_style_text_font(status, id(roboto_lg)->get_lv_font(), 0);
+            lv_obj_set_style_text_color(status, lv_color_white(), 0);
+            lv_label_set_text(status, "");
+
+            lv_obj_t *heard = lv_label_create(col);
+            lv_obj_set_width(heard, lv_pct(100));
+            lv_label_set_long_mode(heard, LV_LABEL_LONG_WRAP);
+            lv_obj_set_style_text_align(heard, LV_TEXT_ALIGN_CENTER, 0);
+            lv_obj_set_style_text_font(heard, id(roboto_md)->get_lv_font(), 0);
+            lv_obj_set_style_text_color(heard, lv_color_hex(0xB0B0B0), 0);
+            lv_label_set_text(heard, "");
+
+            id(va_backdrop) = back;
+            id(va_card) = card;
+            id(va_icon) = icon;
+            id(va_status) = status;
+            id(va_heard) = heard;
+
+script:
+  # Shows the card with a status line (and, when given, what was heard); red mic while listening.
+  - id: va_show
+    parameters:
+      status: std::string
+      heard: std::string
+      listening: bool
+    then:
+      - script.stop: va_hide_later
+      - lambda: |-
+          if (id(va_card) == nullptr)
+            return;
+          lv_label_set_text(id(va_status), status.c_str());
+          if (!heard.empty())
+            lv_label_set_text(id(va_heard), heard.c_str());
+          if (lv_label_get_text(id(va_heard))[0] == '\0')
+            lv_obj_add_flag(id(va_heard), LV_OBJ_FLAG_HIDDEN);
+          else
+            lv_obj_remove_flag(id(va_heard), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_set_style_text_color(id(va_icon), lv_color_hex(listening ? 0xFF5252 : 0x4FC3F7), 0);
+          lv_obj_set_style_text_opa(id(va_icon), listening ? LV_OPA_40 : LV_OPA_20, 0);
+          lv_obj_remove_flag(id(va_backdrop), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(va_backdrop));
+  - id: va_hide
+    then:
+      - script.stop: va_hide_later
+      - lambda: |-
+          if (id(va_card) == nullptr)
+            return;
+          lv_obj_add_flag(id(va_backdrop), LV_OBJ_FLAG_HIDDEN);
+          lv_label_set_text(id(va_heard), "");
+  - id: va_hide_later
+    mode: restart
+    then:
+      - delay: 5s
+      - script.execute: va_hide
+  # Gives up when no speech has started 5 s after the wake word.
+  - id: va_listen_timeout
+    mode: restart
+    then:
+      - delay: 5s
+      - if:
+          condition: voice_assistant.is_running
+          then:
+            - voice_assistant.stop:
+            - script.execute: { id: va_show, status: "Didn't catch that", heard: "", listening: false }
+            - script.execute: va_hide_later
+            - script.execute: va_resume_wake
+  # Listen for the wake word again once the request is over and the reply has been spoken
+  # (the mic and speaker share one audio bus, and it must not hear its own reply).
+  - id: va_resume_wake
+    mode: restart
+    then:
+      - wait_until:
+          condition:
+            and:
+              - not: voice_assistant.is_running
+              - not: media_player.is_announcing
+          timeout: 30s
+      - delay: 500ms
+      - if:
+          condition:
+            not: micro_wake_word.is_running
+          then:
+            - micro_wake_word.start:
+
+micro_wake_word:
+  id: mww
+  microphone: main_microphone
+  models:
+    - model: okay_nabu
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda return wake_word;
+
+voice_assistant:
+  id: va
+  microphone: main_microphone
+  media_player: xl_media_player
+  noise_suppression_level: 2
+  auto_gain: 31dBFS
+  volume_multiplier: 2.0
+  micro_wake_word: mww
+  on_client_connected:
+    - micro_wake_word.start:
+  on_listening:
+    - lambda: if (id(va_heard) != nullptr) lv_label_set_text(id(va_heard), "");
+    - script.execute: { id: va_show, status: "Listening...", heard: "", listening: true }
+    - script.execute: va_listen_timeout
+  on_stt_vad_start: # speech began: no time limit now
+    - script.stop: va_listen_timeout
+  on_stt_vad_end:
+    - script.execute: { id: va_show, status: "Thinking...", heard: "", listening: false }
+  on_stt_end:
+    - script.execute:
+        id: va_show
+        status: "Thinking..."
+        heard: !lambda 'return std::string("\"") + x + "\"";'
+        listening: false
+  on_tts_start:
+    - script.execute: { id: va_show, status: !lambda "return x;", heard: "", listening: false }
+  on_end:
+    - script.stop: va_listen_timeout
+    - script.execute: va_hide_later
+    - script.execute: va_resume_wake
+  on_error:
+    - script.execute:
+        id: va_show
+        status: !lambda 'return std::string("Sorry: ") + message;'
+        heard: ""
+        listening: false
+    - script.execute: va_hide_later
+    - script.execute: va_resume_wake
+  on_client_disconnected:
+    - micro_wake_word.stop:

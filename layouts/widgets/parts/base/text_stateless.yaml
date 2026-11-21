@@ -1,0 +1,18 @@
+# Base template (text_stateless): not placed directly; the widgets in layouts/widgets/ build on it.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - text
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  widgets:
+    - label:
+        id: ${uid}_widget_icon
+        text: ${text}
+        text_font: roboto_md
+        align: BOTTOM_LEFT

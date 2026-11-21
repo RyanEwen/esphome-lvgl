@@ -1,0 +1,11 @@
+# Demo: the Bedroom's own page, opened from its room tile: its lights (the lamps go to 1%
+# on a long press), the TV and its volume, and a button for a script.
+
+packages:
+  - !include { file: ../../layouts/widgets/page.yaml, vars: { page: room_bedroom, title: Bedroom } }
+  - !include { file: ../../layouts/widgets/light.yaml, vars: { page: room_bedroom, entity_id: light.bedroom_ceiling, text: Ceiling } }
+  - !include { file: ../../layouts/widgets/dimmer_hold.yaml, vars: { page: room_bedroom, entity_id: light.bedroom_lamp_left, text: Left Lamp } }
+  - !include { file: ../../layouts/widgets/dimmer_hold.yaml, vars: { page: room_bedroom, entity_id: light.bedroom_lamp_right, text: Right Lamp } }
+  - !include { file: ../../layouts/widgets/tv.yaml, vars: { page: room_bedroom, entity_id: media_player.bedroom_tv } }
+  - !include { file: ../../layouts/widgets/volume.yaml, vars: { page: room_bedroom, entity_id: media_player.bedroom_tv } }
+  - !include { file: ../../layouts/widgets/script.yaml, vars: { page: room_bedroom, entity_id: script.bedtime, text: Bedtime, icon: "\U000F0594", width: 100% } }

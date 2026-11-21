@@ -1,0 +1,7 @@
+# Feeds toggle.yaml from Home Assistant. Include as a package, once per tile, same uid.
+#
+# required vars:
+# - uid
+# - entity_id
+
+<<: !include base/stateful.sensors.yaml

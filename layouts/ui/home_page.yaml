@@ -1,0 +1,34 @@
+# A page's entry in the Home page list (the "Home page" select, also in Settings): the page
+# a panel opens on at boot and returns to from the screensaver. Every page that can be
+# home includes this once, as a package; ../widgets/page.yaml does it for your pages.
+# required vars:
+#   page: the page's id
+#   label: its name in the list, e.g. "Bedroom"
+
+esphome:
+  on_boot:
+    # Put back the Home page chosen earlier, which the layout keeps as a hash of its name.
+    # Before go_home at -100.
+    - priority: 0
+      then:
+        - if:
+            condition:
+              - lambda: return id(home_page_hash) == fnv1_hash("${label}");
+            then:
+              - select.set:
+                  id: home_page_select
+                  option: "${label}"
+
+select:
+  - id: !extend home_page_select
+    options:
+      - "${label}"
+
+script:
+  - id: !extend go_home
+    then:
+      - if:
+          condition:
+            - lambda: return id(home_page_select).current_option() == "${label}";
+          then:
+            - lvgl.page.show: ${page}

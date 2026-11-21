@@ -1,0 +1,106 @@
+# A room tile: the light group button (tap toggles every light in the room) with a
+# chevron along its right edge that opens the room's page, as does a long press.
+# Same light_group.sensors.yaml as light_group.yaml.
+#
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+# - page      -- the room's page id
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  pad_left: 12 # room for the name beside the state bar
+  pad_right: 12
+  on_short_click:
+    # build-time proof that this tile's sensors package was included
+    - lambda: (void) id(${uid}_widget_sensor);
+    - homeassistant.action:
+        action: light.toggle
+        data:
+          entity_id: ${entity_id}
+          brightness_pct: '100'
+  on_long_press:
+    - lvgl.page.show: ${page}
+  widgets:
+    # the state: a bar down the left edge -- yellow when on, white when off, faint
+    # until Home Assistant has said (the _unknown / _on / _off ids the sensors switch)
+    - obj:
+        id: ${uid}_widget_unknown
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 25%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+    - obj:
+        id: ${uid}_widget_on
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFD700
+        bg_opa: COVER
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - obj:
+        id: ${uid}_widget_off
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 80%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        text_font: ${tile_font}
+        align: LEFT_MID
+        x: 10 # past the state bar
+        width: 66% # clear of the room button
+        long_mode: DOT
+    - obj: # the room part: a divider and a chevron, its own tap target
+        align: RIGHT_MID
+        x: 12 # out to the tile's edge, past its padding
+        width: ${room_zone_w} # the tap target; reaches a little left of the divider
+        height: ${height}
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 0
+        pad_all: 0
+        scrollable: false
+        on_click:
+          - lvgl.page.show: ${page}
+        widgets:
+          - obj: # a faint divider, so it reads as a separate part of the tile
+              align: LEFT_MID
+              x: ${room_divider_x}
+              width: 1
+              height: 56%
+              bg_color: 0xFFFFFF
+              bg_opa: 15%
+              border_width: 0
+              pad_all: 0
+              clickable: false
+          - label:
+              align: CENTER
+              x: ${room_divider_x // 2} # centred right of the divider
+              text: "\U000F0142" # chevron-right
+              text_font: mdi_md
+              text_opa: 70%

@@ -1,0 +1,65 @@
+# Base template (icon_text_stateful): not placed directly; the widgets in layouts/widgets/ build on it.
+#
+# required vars:
+# - uid
+# - width
+# - height
+# - icon_on   -- unused since the state became a bar; kept so callers needn't change
+# - icon_off
+# - text
+
+# button:
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  pad_left: 12 # room for the name beside the state bar
+  pad_right: 12
+  widgets:
+    # the state: a bar down the left edge -- yellow when on, white when off, faint
+    # until Home Assistant has said (the _unknown / _on / _off ids the sensors switch)
+    - obj:
+        id: ${uid}_widget_unknown
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 25%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+    - obj:
+        id: ${uid}_widget_on
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFD700
+        bg_opa: COVER
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - obj:
+        id: ${uid}_widget_off
+        align: LEFT_MID
+        x: -4 # nearer the tile edge
+        width: 5
+        height: 100%
+        radius: 3
+        bg_color: 0xFFFFFF
+        bg_opa: 80%
+        border_width: 0
+        pad_all: 0
+        clickable: false
+        hidden: true
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        text_font: ${tile_font}
+        align: LEFT_MID
+        x: 10 # past the state bar
+        width: 88%
+        long_mode: DOT

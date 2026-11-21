@@ -1,0 +1,39 @@
+# A page of widgets: the page itself, with the header's title and the tab it belongs to, and
+# its entry in the Home page list. Include it first in a page file, then one widgets/*.yaml
+# per widget with the same page; they fill the page two to a row, in the order they're
+# included (demo/pages/ has examples).
+#
+# vars:
+#   page:   the page's id, e.g. room_bedroom
+#   title:  shown in the header, and its name in the Home page list
+#   tab:    the tab lit while it's open (default rooms)
+#   skip:   "true" for a page opened from a widget (room.yaml); "false" for a tab you can swipe to
+#           (default "true")
+#   scroll: "true" when its widgets may not fit the screen (default "false")
+
+defaults:
+  tab: rooms
+  skip: "true"
+  scroll: "false"
+
+lvgl:
+  pages:
+    - id: ${page}
+      skip: ${skip}
+      <<: !include ../ui/vars/page.yaml
+      bg_color: 0x1C1C1C
+      on_load:
+        - lvgl.label.update: { id: page_title, text: "${title}" }
+        - script.execute: { id: tab_select, page: "${tab}" }
+      widgets:
+        - obj:
+            id: ${page}_widgets
+            <<: !include ../ui/vars/container.yaml
+            bg_opa: TRANSP
+            scrollable: ${scroll}
+            layout:
+              <<: !include ../ui/vars/button_layout.yaml
+            widgets: []
+
+packages:
+  home_page: !include { file: ../ui/home_page.yaml, vars: { page: "${page}", label: "${title}" } }

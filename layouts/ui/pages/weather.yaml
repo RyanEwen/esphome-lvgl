@@ -1,0 +1,350 @@
+# Weather: current conditions from the weather entity, and a 6-day forecast
+# fetched with weather.get_forecasts (an action response; the device must be allowed to
+# perform Home Assistant actions). Part of layouts/ui/pages.yaml.
+# Vars: weather_entity (substitution, set in main.yaml).
+
+lvgl:
+  pages:
+    - id: weather
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C # Home Assistant card grey; the header and tab bars (0x2B2B2B) stand apart
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Weather
+        - script.execute: { id: tab_select, page: weather }
+        - script.execute: weather_fetch
+      widgets:
+        - obj: # current conditions
+            x: ${gap}
+            y: ${gap}
+            width: ${screen_w - 2 * gap}
+            height: ${wx_now_h}
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            pad_left: ${wx_pad}
+            pad_right: ${wx_pad}
+            scrollable: false
+            layout: # icon at the left edge, text block at the right edge
+              type: FLEX
+              flex_flow: ROW
+              flex_align_main: SPACE_BETWEEN
+              flex_align_cross: CENTER
+            widgets:
+              - label:
+                  id: wx_now_icon
+                  text: "\U000F05D6"
+                  text_font: weather_xl
+              - obj:
+                  width: SIZE_CONTENT
+                  height: SIZE_CONTENT
+                  bg_opa: TRANSP
+                  border_width: 0
+                  pad_all: 0
+                  scrollable: false
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                    flex_align_cross: END
+                    pad_row: 2
+                  widgets:
+                    - label: { id: wx_now_temp, text: "--°", text_font: temp_xl }
+                    - label: { id: wx_now_cond, text: "--", text_font: roboto_md }
+                    - label: { id: wx_now_hilo, text: " ", text_font: roboto_sm, text_opa: 70% }
+                    - label: { id: wx_now_humidity, text: " ", text_font: roboto_sm, text_opa: 70% }
+        - obj: # forecast
+            x: ${gap}
+            y: ${wx_now_h + 2 * gap}
+            width: ${screen_w - 2 * gap}
+            height: SIZE_CONTENT
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              pad_row: ${wx_row_gap}
+            widgets:
+              - obj:
+                  id: wx_row_0
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d0_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d0_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d0_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d0_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d0_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d0_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d0_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d0_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # where the temperature is right now; ui::place_now_marker puts it on the bar
+                        id: wx_now_marker
+                        width: 6
+                        height: 6
+                        radius: 3
+                        bg_color: 0xFFFFFF
+                        bg_opa: COVER
+                        border_width: 0
+                        shadow_width: 0
+                        pad_all: 0
+                        hidden: true
+              - obj:
+                  id: wx_row_1
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d1_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d1_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d1_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d1_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d1_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d1_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d1_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d1_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+              - obj:
+                  id: wx_row_2
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d2_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d2_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d2_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d2_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d2_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d2_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d2_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d2_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+              - obj:
+                  id: wx_row_3
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d3_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d3_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d3_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d3_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d3_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d3_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d3_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d3_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+              - obj:
+                  id: wx_row_4
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d4_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d4_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d4_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d4_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d4_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d4_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d4_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d4_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+              - obj:
+                  id: wx_row_5
+                  width: 100%
+                  height: ${wx_row_h}
+                  bg_color: 0xFFFFFF
+                  bg_opa: 8%
+                  radius: 10
+                  border_width: 0
+                  pad_left: ${wx_pad}
+                  pad_right: ${wx_pad}
+                  scrollable: false
+                  widgets:
+                    - label: { id: wx_d5_day, align: LEFT_MID, text: " ", text_font: roboto_md }
+                    - label: { id: wx_d5_icon, align: LEFT_MID, x: "${wx_icon_x}", text: "", text_font: mdi_md }
+                    - label: { id: wx_d5_drop, align: LEFT_MID, x: "${wx_drop_x}", text: "\U000F058E", text_font: icon_xs, text_opa: 60%, hidden: true }
+                    - label: { id: wx_d5_rain, align: LEFT_MID, x: "${wx_rain_x}", text: " ", text_font: text_detail, text_opa: 70% }
+                    - label: { id: wx_d5_lo, align: LEFT_MID, x: "${wx_lo_x}", width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+                    - obj: # temperature range track; ui::render_forecast places the fill
+                        id: wx_d5_track
+                        align: LEFT_MID
+                        x: ${wx_track_x}
+                        width: ${wx_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - obj: { id: wx_d5_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR }
+                    - label: { id: wx_d5_hi, align: RIGHT_MID, width: "${wx_num_w}", text: " ", text_align: RIGHT, text_font: roboto_sm, text_opa: 80% }
+
+packages:
+  weather_access: !include { file: ../home_page.yaml, vars: { page: weather, label: "Weather" } }
+
+text_sensor:
+  - platform: homeassistant
+    id: wx_condition
+    entity_id: ${weather_entity}
+    on_value:
+      - lambda: |-
+          lv_label_set_text(id(wx_now_icon), ui::weather_icon(x));
+          lv_obj_set_style_text_color(id(wx_now_icon), ui::weather_color(x), LV_PART_MAIN);
+          lv_label_set_text(id(wx_now_cond), ui::weather_label(x).c_str());
+
+sensor:
+  - platform: homeassistant
+    id: wx_temperature
+    entity_id: ${weather_entity}
+    attribute: temperature
+    on_value:
+      - lambda: |-
+          lv_label_set_text(id(wx_now_temp), isnan(x) ? "--°" : (std::to_string((int) lroundf(x)) + "°").c_str());
+          ui::place_now_marker(id(wx_now_marker), id(wx_d0_track), id(wx_d0_fill), x);
+  - platform: homeassistant
+    id: wx_humidity
+    entity_id: ${weather_entity}
+    attribute: humidity
+    on_value:
+      - lambda: |-
+          lv_label_set_text(id(wx_now_humidity), isnan(x) ? " " : ("Humidity " + std::to_string((int) lroundf(x)) + "%").c_str());
+
+interval:
+  - interval: 30min
+    then:
+      - script.execute: weather_fetch
+
+script:
+  # weather.get_forecasts (daily) -> one line per day: label|condition|high|low|precip %
+  - id: weather_fetch
+    mode: single
+    then:
+      - if:
+          condition: api.connected
+          then:
+            - homeassistant.action:
+                action: weather.get_forecasts
+                data:
+                  entity_id: ${weather_entity}
+                  type: daily
+                capture_response: true
+                response_template: |-  # literal block: the line breaks are part of the output
+                  {%- set f = (response.values() | first).forecast if response else [] -%}
+                  {%- for d in f[:6] -%}
+                  {%- set t = as_datetime(d.datetime) | as_local -%}
+                  {{ 'Today' if t.date() == now().date() else t.strftime('%a') }}|{{ d.condition }}|{{ (d.temperature | round(0) | int) if d.temperature is not none else '' }}|{{ (d.templow | round(0) | int) if d.templow is defined and d.templow is not none else '' }}|{{ d.precipitation_probability | int(0) if d.precipitation_probability is defined else '' }}
+                  {% endfor -%}
+                on_success:
+                  - lambda: |-
+                      {  // log the raw reply (debugging aid)
+                        std::string raw;
+                        serializeJson(response, raw);
+                        ESP_LOGI("ui", "weather reply (%u bytes): %.900s", (unsigned) raw.size(), raw.c_str());
+                      }
+                      const std::string txt = response["response"].is<const char *>() ? response["response"].as<std::string>() : std::string();
+                      ui::ForecastRow rows[] = {
+                          {id(wx_row_0), id(wx_d0_day), id(wx_d0_icon), id(wx_d0_drop), id(wx_d0_rain), id(wx_d0_lo), id(wx_d0_track), id(wx_d0_fill), id(wx_d0_hi)},
+                          {id(wx_row_1), id(wx_d1_day), id(wx_d1_icon), id(wx_d1_drop), id(wx_d1_rain), id(wx_d1_lo), id(wx_d1_track), id(wx_d1_fill), id(wx_d1_hi)},
+                          {id(wx_row_2), id(wx_d2_day), id(wx_d2_icon), id(wx_d2_drop), id(wx_d2_rain), id(wx_d2_lo), id(wx_d2_track), id(wx_d2_fill), id(wx_d2_hi)},
+                          {id(wx_row_3), id(wx_d3_day), id(wx_d3_icon), id(wx_d3_drop), id(wx_d3_rain), id(wx_d3_lo), id(wx_d3_track), id(wx_d3_fill), id(wx_d3_hi)},
+                          {id(wx_row_4), id(wx_d4_day), id(wx_d4_icon), id(wx_d4_drop), id(wx_d4_rain), id(wx_d4_lo), id(wx_d4_track), id(wx_d4_fill), id(wx_d4_hi)},
+                          {id(wx_row_5), id(wx_d5_day), id(wx_d5_icon), id(wx_d5_drop), id(wx_d5_rain), id(wx_d5_lo), id(wx_d5_track), id(wx_d5_fill), id(wx_d5_hi)},
+                      };
+                      ui::render_forecast(txt, rows, 6, id(wx_now_hilo), id(wx_temperature).state, id(wx_now_marker));
+                on_error:
+                  - logger.log:
+                      level: WARN
+                      format: "weather.get_forecasts failed: %s"
+                      args: [error.c_str()]

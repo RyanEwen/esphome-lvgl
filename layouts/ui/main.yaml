@@ -1,0 +1,123 @@
+# The shared parts of the panel layout: fonts for weather and the agenda, the tab
+# highlight script, and the weather/calendar substitutions. See ui/base.yaml for how a
+# config puts the layout together.
+#
+# Weather and Agenda call Home Assistant actions and read the response, so in Home
+# Assistant the device needs "Allow the device to perform Home Assistant actions".
+
+esphome:
+  includes:
+    - ui.h # weather icons/labels, agenda renderer
+  on_boot:
+    - priority: 0
+      then:
+        - lambda: |-
+            ui::agenda_fonts() = ui::AgendaFonts{
+                id(text_caps)->get_lv_font(), id(day_num)->get_lv_font(), id(text_title)->get_lv_font(),
+                id(text_detail)->get_lv_font(), id(icon_xs)->get_lv_font(), ${agenda_date_w}};
+
+substitutions:
+  # Defaults; set your own in your config or a shared file (docs/getting-started.md, step 4).
+  # The Weather page and the screensaver's weather row.
+  weather_entity: weather.forecast_home
+  # Calendars the Agenda may show, comma-separated; empty = every calendar in Home
+  # Assistant. Each panel can switch them off individually (gear on the Agenda page).
+  calendars: ""
+  # Screensaver photos, off by default: "true" to fetch them from the photo-frame service
+  # (tools/photo-frame: a folder of photos, or an Immich album) at photo_server, as
+  # http://host[:port][/path]. Off, the screensaver shows the clock, weather and events on
+  # black, or on a still image built into the firmware (see demo/screensaver_still.yaml).
+  screensaver_photos: "false"
+  photo_server: http://photo-frame.local:8000
+  # Cameras page: go2rtc, and the four cameras' stream keys and names. Streams are
+  # esp_<key> plus a per-panel suffix (see the Cameras page you include).
+  go2rtc: http://homeassistant.local:1984
+  cam_1: front_door
+  cam_1_name: Door
+  cam_2: driveway
+  cam_2_name: Drive
+  cam_3: backyard
+  cam_3_name: Back
+  cam_4: garage
+  cam_4_name: Garage
+
+
+font:
+  - id: tab_text # the tab bar's labels
+    file: { type: gfonts, family: Roboto }
+    size: ${tab_font_size}
+    bpp: 4
+  - id: tile_text # tile names (sized per screen: room beside the chevron)
+    file: { type: gfonts, family: Roboto }
+    size: ${tile_font_size}
+    bpp: 4
+  # Agenda
+  - id: text_title # event titles: any text, so a wider glyph set
+    file: { type: gfonts, family: Roboto, weight: 500 }
+    size: ${font_title}
+    bpp: 4
+    glyphsets: [GF_Latin_Core]
+  - id: text_detail # time ranges, countdowns, rain chance
+    file: { type: gfonts, family: Roboto }
+    size: ${font_detail}
+    bpp: 4
+    glyphsets: [GF_Latin_Core]
+  - id: text_caps # "FRI" / "NOV"
+    file: { type: gfonts, family: Roboto, weight: 500 }
+    size: ${font_caps}
+    bpp: 4
+    glyphs: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  - id: day_num
+    file: { type: gfonts, family: Roboto, weight: 300 }
+    size: ${font_day}
+    bpp: 4
+    glyphs: "0123456789"
+  - id: icon_xs
+    file: https://github.com/Pictogrammers/pictogrammers.github.io/raw/refs/heads/main/@mdi/font/7.4.47/fonts/materialdesignicons-webfont.ttf
+    size: ${font_icon_xs}
+    bpp: 4
+    glyphs: ["\U000F0150", "\U000F058E"] # clock-outline, water-percent
+  # Weather
+  - id: temp_xl
+    file: { type: gfonts, family: Roboto, weight: 300 }
+    size: ${font_temp_xl}
+    bpp: 4
+    glyphs: "-0123456789°"
+  - id: weather_xl
+    file: https://github.com/Pictogrammers/pictogrammers.github.io/raw/refs/heads/main/@mdi/font/7.4.47/fonts/materialdesignicons-webfont.ttf
+    size: ${font_weather_xl}
+    bpp: 4
+    glyphs: ["\U000F0599", "\U000F0594", "\U000F0595", "\U000F0590", "\U000F0591", "\U000F0592",
+             "\U000F0593", "\U000F067E", "\U000F0596", "\U000F0597", "\U000F0598", "\U000F067F",
+             "\U000F059D", "\U000F059E", "\U000F05D6"]
+
+script:
+  # Highlight the footer tab for the page now showing (each page calls this on load).
+  - id: tab_select
+    parameters:
+      page: string
+    then:
+      - lambda: |-
+          const std::pair<const char *, lv_obj_t *> tabs[] = {
+              {"rooms", id(tab_rooms)},
+              {"weather", id(tab_weather)},
+              {"agenda", id(tab_agenda)},
+              {"cameras", id(tab_cameras)},
+          };
+          for (const auto &t : tabs) {
+            if (page == t.first)
+              lv_obj_add_state(t.second, LV_STATE_CHECKED);
+            else
+              lv_obj_remove_state(t.second, LV_STATE_CHECKED);
+          }
+
+
+button:
+  # Fetch weather and agenda now (they otherwise refresh on page load and on a timer).
+  - platform: template
+    name: Refresh weather & agenda
+    icon: mdi:refresh
+    entity_category: diagnostic
+    on_press:
+      - script.execute: weather_fetch
+      - script.execute: agenda_fetch

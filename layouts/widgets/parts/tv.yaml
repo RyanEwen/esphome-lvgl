@@ -1,0 +1,112 @@
+# A TV card for a room page: what the TV is doing, and power / previous / play-pause /
+# next. Pair with tv.sensors.yaml (same vars). Extra buttons (volume, a favourite show) can
+# follow it in the page's grid.
+#
+# required vars:
+# - uid
+# - entity_id   -- the media_player
+# - text        -- the card's name, e.g. "TV"
+
+# obj:
+  id: ${uid}_tv
+  width: 100%
+  height: SIZE_CONTENT
+  bg_color: 0x3C3C3C # a tile's grey
+  radius: 10
+  border_width: 0
+  pad_all: ${gap + 4}
+  scrollable: false
+  layout:
+    type: FLEX
+    flex_flow: COLUMN
+    pad_row: 12
+  widgets:
+    - obj: # icon, name and what's on, one line
+        width: 100%
+        height: SIZE_CONTENT
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+        clickable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_cross: CENTER
+          pad_column: 12
+        widgets:
+          - label:
+              id: ${uid}_tv_icon
+              text: "\U000F083B" # television-off until HA says otherwise
+              text_font: mdi_md
+          - label: { text: "${text}", text_font: roboto_md }
+          - label: # what's on, on the same line, cut short with "..." when long
+              id: ${uid}_tv_status
+              flex_grow: 1
+              text: " "
+              text_font: roboto_sm
+              text_opa: 65%
+              text_align: RIGHT
+              long_mode: DOT
+              height: ${(text_sm * 6) // 5} # one line, so DOT cuts it rather than wrapping
+    - obj: # controls
+        width: 100%
+        height: ${button_height}
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+        clickable: false
+        layout:
+          type: FLEX
+          flex_flow: ROW
+          flex_align_main: SPACE_BETWEEN
+          pad_column: 8
+        widgets:
+          - button:
+              flex_grow: 1
+              height: 100%
+              bg_color: 0x4A4A4A
+              on_click:
+                - homeassistant.action: { action: media_player.toggle, data: { entity_id: "${entity_id}" } }
+              widgets:
+                - label: { align: CENTER, text: "\U000F0425", text_font: mdi_md } # power
+          - button:
+              id: ${uid}_tv_prev
+              flex_grow: 1
+              height: 100%
+              bg_color: 0x4A4A4A
+              disabled: # the TV is off: faded, not the theme's lighter grey
+                bg_color: 0x4A4A4A
+                bg_opa: 40%
+                text_opa: 35%
+              on_click:
+                - homeassistant.action: { action: media_player.media_previous_track, data: { entity_id: "${entity_id}" } }
+              widgets:
+                - label: { align: CENTER, text: "\U000F04AE", text_font: mdi_md } # skip-previous
+          - button:
+              id: ${uid}_tv_play
+              flex_grow: 1
+              height: 100%
+              bg_color: 0x4A4A4A
+              disabled: # the TV is off: faded, not the theme's lighter grey
+                bg_color: 0x4A4A4A
+                bg_opa: 40%
+                text_opa: 35%
+              on_click:
+                - homeassistant.action: { action: media_player.media_play_pause, data: { entity_id: "${entity_id}" } }
+              widgets:
+                - label: { align: CENTER, text: "\U000F040E", text_font: mdi_md } # play-pause
+          - button:
+              id: ${uid}_tv_next
+              flex_grow: 1
+              height: 100%
+              bg_color: 0x4A4A4A
+              disabled: # the TV is off: faded, not the theme's lighter grey
+                bg_color: 0x4A4A4A
+                bg_opa: 40%
+                text_opa: 35%
+              on_click:
+                - homeassistant.action: { action: media_player.media_next_track, data: { entity_id: "${entity_id}" } }
+              widgets:
+                - label: { align: CENTER, text: "\U000F04AD", text_font: mdi_md } # skip-next

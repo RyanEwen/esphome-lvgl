@@ -1,0 +1,161 @@
+# Agenda: the next 31 days of events, grouped by day, fetched with
+# calendar.get_events (an action response; the device must be allowed to perform Home
+# Assistant actions) and drawn by ui::render_agenda (ui/ui.h).
+# Part of the panel layout (layouts/ui/pages.yaml).
+#
+# Which calendars: every calendar in Home Assistant by default, or the ones listed in the
+# calendars substitution; the gear button opens agenda_settings, where each one
+# can be switched off on this panel. A calendar's colour comes from its position in that
+# list, sorted by name, so switching one off doesn't recolour the rest.
+
+lvgl:
+  pages:
+    - id: agenda
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C # Home Assistant card grey; the header and tab bars (0x2B2B2B) stand apart
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Agenda
+        - script.execute: { id: tab_select, page: agenda }
+        - script.execute: agenda_fetch
+      widgets:
+        - obj:
+            id: agenda_list
+            width: 100%
+            height: 100%
+            bg_opa: TRANSP
+            border_width: 0
+            radius: 0
+            pad_top: 8
+            pad_bottom: 16
+            pad_left: 12
+            pad_right: 12
+            scrollable: true
+            scroll_dir: VER
+            scrollbar_mode: AUTO
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              pad_row: 10
+            widgets:
+              - label: { text: "Loading agenda...", text_font: text_detail, text_opa: 60% }
+        - button: # calendar settings
+            align: BOTTOM_RIGHT
+            x: ${0 - gap - 4}
+            y: ${0 - gap - 4}
+            width: ${button_height}
+            height: ${button_height}
+            radius: 10
+            bg_color: 0x3C3C3C
+            bg_opa: 90%
+            shadow_width: 0
+            on_click:
+              - lvgl.page.show: agenda_settings
+            widgets:
+              - label: { align: CENTER, text: "\U000F0493", text_font: mdi_md } # cog
+
+packages:
+  agenda_access: !include { file: ../home_page.yaml, vars: { page: agenda, label: "Agenda" } }
+
+globals:
+  # Calendars switched off on this panel, as fnv1 hashes of their entity ids (0 = free
+  # slot). Hashes rather than names so the set fits a fixed-size restorable global.
+  - id: agenda_hidden
+    type: std::array<uint32_t, 32> # = ui::HiddenCalendars (the generated code declares it before our header)
+    restore_value: true
+    initial_value: "std::array<uint32_t, 32>{}"
+
+interval:
+  - interval: 5min
+    then:
+      - script.execute: agenda_fetch
+
+script:
+  # calendar.get_events for the next 31 days. The reply (format in ui/ui.h)
+  # lists every eligible calendar (C lines, sorted by name), each day (D) and each event (E).
+  # Events that started before today show today.
+  - id: agenda_fetch
+    mode: single
+    then:
+      - if:
+          condition:
+            # every known calendar switched off: nothing to ask Home Assistant for
+            lambda: return !ui::agenda_calendars().empty() && ui::visible_calendars(id(agenda_hidden)).empty();
+          then:
+            - lambda: |-
+                lv_obj_clean(id(agenda_list));
+                ui::agenda_label(id(agenda_list), "No calendars selected. Tap the gear to choose.",
+                                   id(text_detail)->get_lv_font(), LV_OPA_60);
+          else:
+            - if:
+                condition: api.connected
+                then:
+                  - homeassistant.action:
+                      action: calendar.get_events
+                      variables:
+                        # the calendars to fetch, comma-separated; empty until the first reply
+                        # has told the panel which calendars exist (then: every eligible one)
+                        visible: !lambda return ui::visible_calendars(id(agenda_hidden));
+                      data_template:
+                        entity_id: >-
+                          {{ visible if visible else
+                             ((('${calendars}'.split(',') | map('trim') | select | list)
+                               or (states.calendar | rejectattr('state', 'in', ['unavailable', 'unknown']) | map(attribute='entity_id') | list)) | join(',')) }}
+                        start_date_time: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+                        end_date_time: "{{ (now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=31)).isoformat() }}"
+                      capture_response: true
+                      response_template: |-  # literal block: the line breaks are part of the output
+                        {%- set listed = '${calendars}'.split(',') | map('trim') | select | list -%}
+                        {%- set cals = expand(listed or (states.calendar | map(attribute='entity_id') | list)) | rejectattr('state', 'in', ['unavailable', 'unknown']) | sort(attribute='name') | list -%}
+                        {%- for s in cals -%}
+                        C|{{ s.entity_id }}|{{ s.name | replace('|', '/') }}
+                        {% endfor -%}
+                        {%- set today = now().date() -%}
+                        {%- set ns = namespace(ev=[]) -%}
+                        {%- for s in cals if response and s.entity_id in response -%}
+                          {%- set ci = loop.index0 -%}
+                          {%- for e in response[s.entity_id].events -%}
+                            {%- if 'T' not in e.start -%}
+                              {%- set sd = strptime(e.start, '%Y-%m-%d').date() -%}
+                              {%- set ed = strptime(e.end, '%Y-%m-%d').date() - timedelta(days=1) -%}
+                              {%- set rng = 'All day' if ed <= sd else 'All day, until ' ~ ed.strftime('%a %-d') -%}
+                              {%- set key = e.start -%}
+                              {%- set endts = as_timestamp(today_at('00:00') + timedelta(days=(ed - today).days + 1)) | int -%}
+                            {%- else -%}
+                              {%- set st = as_datetime(e.start) | as_local -%}
+                              {%- set sd = st.date() -%}
+                              {%- set rng = st.strftime('%H:%M') ~ ' - ' ~ (as_datetime(e.end) | as_local).strftime('%H:%M') -%}
+                              {%- set key = st.isoformat() -%}
+                              {%- set endts = as_timestamp(e.end) | int -%}
+                            {%- endif -%}
+                            {%- set off = [(sd - today).days, 0] | max -%}
+                            {%- set title = (e.summary or '') | replace('|', '/') | replace('\n', ' ') | truncate(60, true, '') -%}
+                            {%- set ns.ev = ns.ev + [{'k': key, 'd': off, 'l': 'E|' ~ off ~ '|' ~ cals.index(s) ~ '|' ~ rng ~ '|' ~ endts ~ '|' ~ title}] -%}
+                          {%- endfor -%}
+                        {%- endfor -%}
+                        {%- set evs = (ns.ev | sort(attribute='k'))[:40] -%}
+                        {%- for i in range(31) -%}
+                        {%- set d = today + timedelta(days=i) -%}
+                        D|{{ i }}|{{ d.strftime('%a') | upper }}|{{ d.day }}|{{ d.strftime('%b') | upper }}|{{ (d - timedelta(days=(d.weekday() + 1) % 7)).strftime('%Y%m%d') }}
+                        {% for e in evs if e.d == i %}{{ e.l }}
+                        {% endfor -%}
+                        {%- endfor -%}
+                      on_success:
+                        - lambda: |-
+                            {  // log the raw reply (debugging aid)
+                              std::string raw;
+                              serializeJson(response, raw);
+                              ESP_LOGI("ui", "agenda reply (%u bytes): %.900s", (unsigned) raw.size(), raw.c_str());
+                            }
+                            const std::string txt = response["response"].is<const char *>() ? response["response"].as<std::string>() : std::string();
+                            ui::clock_24h() = id(clock_24h).state;
+                            ui::render_agenda(id(agenda_list), txt, ui::agenda_fonts());
+                            ui::agenda_text() = txt;
+                            if (ui::agenda_updated())
+                              ui::agenda_updated()();
+                      on_error:
+                        - logger.log:
+                            level: WARN
+                            format: "calendar.get_events failed: %s"
+                            args: [error.c_str()]

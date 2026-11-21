@@ -1,0 +1,29 @@
+# Anything with an on/off: a switch, a fan, an input_boolean. Tap toggles it.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: the entity, e.g. light.porch
+#   text:      its name on screen
+#   uid:       a unique id for its widgets (default: the entity id after the dot)
+#   width, height: default half the page wide, the tile height
+#   icon_on, icon_off: MDI glyphs (layouts/fonts/glyphs.yaml), e.g. "\U000F0210"
+
+defaults:
+  uid: ${entity_id.split(".")[1]}
+  width: 49%
+  height: ${tile_height}
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - button:
+                  <<: !include
+                    file: parts/toggle.yaml
+                    vars: { uid: "${uid}", entity_id: "${entity_id}", text: "${text}", width: "${width}", height: "${height}", domain: "${entity_id.split(\".\")[0]}", icon_on: "${icon_on}", icon_off: "${icon_off}" }
+
+packages:
+  sensors: !include { file: parts/toggle.sensors.yaml, vars: { uid: "${uid}", entity_id: "${entity_id}" } }

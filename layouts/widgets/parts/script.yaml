@@ -1,0 +1,27 @@
+# A tile that runs a Home Assistant script (or anything script.turn_on starts): an icon
+# and a name. No state to show, so there's no sensors file.
+#
+# On a page, use layouts/widgets/script.yaml.
+#
+# required vars:
+# - uid
+# - entity_id # script.<name>
+# - width
+# - height
+# - text
+# - icon      # an MDI glyph in layouts/fonts/glyphs.yaml
+
+# button:
+  <<: !include
+    file: base/icon_text_stateless.yaml
+    vars:
+      uid: ${uid}
+      width: ${width}
+      height: ${height}
+      icon: ${icon}
+      text: ${text}
+  on_short_click:
+    - homeassistant.action:
+        action: script.turn_on
+        data:
+          entity_id: ${entity_id}

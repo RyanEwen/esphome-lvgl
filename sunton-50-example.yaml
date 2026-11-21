@@ -1,31 +1,19 @@
 esphome:
-  name: sunton-50-test
-  friendly_name: Sunton 5.0" Test
-  # name_add_mac_suffix: true   # one image on several panels -- see the README
+  name: sunton-50-example
+  friendly_name: Sunton 5.0" Example
+
+# The panel layout with the demo house, on the 5" Sunton (ESP32-8048S050).
+# Make it yours: docs/getting-started.md.
 
 substitutions:
-  home_page: lighting_1
-  # the sleep clock sized for this canvas -- uncomment with sleep_clock below
-  # sleep_clock_card_width: "102"
-  # sleep_clock_card_height: "168"
-  # sleep_clock_card_gap: "8"
-  # sleep_clock_pair_gap: "24"
-  # sleep_clock_digit_size: "132"
+  home_page: Rooms # the page it opens on (also a dropdown in Settings: hold the clock)
+  # weather_entity: weather.forecast_home  # ... and the others listed in layouts/ui/main.yaml
 
 packages:
-  common: !include common.yaml
-  device: !include devices/ESP32-8048S050.yaml
-  layout: !include layouts/800x480.yaml
-  # pages, in navigation order -- or every page at once:
-  # pages: !include layouts/800x480/all.yaml
-  lighting_1: !include layouts/800x480/pages/lighting_1.yaml
-  lighting_2: !include layouts/800x480/pages/lighting_2.yaml
-  # climate: !include layouts/800x480/pages/climate.yaml  # thermostat and number steppers
-  printers: !include layouts/800x480/pages/printers.yaml
-  # optional features -- list them after layout:
-  # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
-  # ceiling: !include features/idle/sun.yaml     # brightness follows the sun
+  common: !include common.yaml               # Wi-Fi, API, OTA, a few diagnostics
+  board: !include boards/sunton-50.yaml        # the hardware, sized for this screen
+  ui: !include layouts/ui/layout.yaml        # the layout: header, tabs, Weather, Agenda, ...
+  rooms: !include demo/pages.yaml # Rooms tab and each room's page: the part you write
   # memory: !include features/diagnostics/memory.yaml  # heap and loop-time sensors
   # psram: !include features/diagnostics/psram.yaml    # PSRAM free
-  # ble_proxy: !include features/ble_proxy/ble_proxy.yaml  # Bluetooth proxy for HA -- see the README first
-  # sleep_clock: !include features/sleep_clock/sleep_clock.yaml  # a split-flap clock instead of going dark; needs idle
+

@@ -1,0 +1,8 @@
+# An AMS row in a printer tile (widgets/printers): name, humidity, then the four trays.
+ams_label_width: ${ams_label_w}
+ams_hum_width: ${ams_hum_w}
+ams_hum_value_width: ${ams_hum_value_w}
+ams_strip_width: ${ams_strip_w}
+ams_tray_width: ${ams_tray_w}
+ams_tray_height: ${ams_tray_h}
+ams_tray_padding: ${ams_tray_pad}

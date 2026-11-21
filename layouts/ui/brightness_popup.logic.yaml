@@ -1,0 +1,41 @@
+# The brightness pop-up's state (see brightness_popup.yaml): which light it is for, and the script a
+# dimmable tile calls to open it. Included from ui/base.yaml.
+
+globals:
+  - id: dimmer_entity # the light the pop-up controls
+    type: std::string
+    initial_value: '""'
+  - id: dimmer_on # whether that light is on, as the pop-up shows it
+    type: bool
+    initial_value: "false"
+
+script:
+  # Opens the pop-up for a light: its name, and the slider at its brightness (0-255 from
+  # Home Assistant; NAN when off, which starts the slider at 100%).
+  - id: dimmer_open
+    parameters:
+      entity: std::string
+      title: std::string
+      brightness: float
+    then:
+      - lambda: |-
+          id(dimmer_entity) = entity;
+          lv_label_set_text(id(dimmer_title), title.c_str());
+          const int pct = std::isnan(brightness) || brightness <= 0
+                              ? 100 : std::max(1, (int) lroundf(brightness * 100.0f / 255.0f));
+          lv_slider_set_value(id(dimmer_slider), pct, LV_ANIM_OFF);
+          lv_label_set_text(id(dimmer_value), (std::to_string(pct) + "%").c_str());
+          id(dimmer_set_on).execute(!std::isnan(brightness) && brightness > 0);
+          lv_obj_remove_flag(id(dimmer_backdrop), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_move_foreground(id(dimmer_backdrop));
+
+  # Shows the light as on (yellow button) or off (grey) in the pop-up.
+  - id: dimmer_set_on
+    parameters:
+      lit: bool
+    then:
+      - lambda: |-
+          id(dimmer_on) = lit;
+          lv_obj_set_style_bg_color(id(dimmer_toggle), lv_color_hex(lit ? 0xFFD700 : 0x3C3C3C), 0);
+          lv_obj_set_style_text_color(id(dimmer_toggle_text), lv_color_hex(lit ? 0x1C1C1C : 0xFFFFFF), 0);
+          lv_label_set_text(id(dimmer_toggle_text), lit ? "On" : "Off");

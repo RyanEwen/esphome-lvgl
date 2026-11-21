@@ -1,0 +1,3 @@
+# A column of printer tiles.
+<<: !include ../../styles/printer_layout.yaml
+pad_row: ${gap}

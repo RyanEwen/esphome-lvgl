@@ -1,0 +1,20 @@
+# A light; tap toggles it. Pair with light.sensors.yaml (same uid).
+#
+# required vars:
+# - uid
+# - entity_id
+# - width
+# - height
+# - text
+
+# button:
+  <<: !include
+    file: light_icons.yaml
+    vars:
+      uid: ${uid}
+      entity_id: ${entity_id}
+      width: ${width}
+      height: ${height}
+      text: ${text}
+      icon_on: "\U000F06E8"
+      icon_off: "\U000F0336"

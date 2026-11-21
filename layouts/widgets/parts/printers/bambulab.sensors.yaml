@@ -1,0 +1,22 @@
+# Every sensor package one printer needs: the core status/progress sensors plus
+# all twelve AMS slots -- units 1-4 and the AMS HTs at 128/129.
+#
+# A slot whose entities do not exist simply never reports, so its row stays
+# hidden and it subscribes to nothing. That is what lets one file serve every
+# printer regardless of how many units it actually has, and what lets a unit
+# move between machines without a reflash.
+#
+# required vars:
+# - uid
+# - entity_id_prefix
+
+packages:
+  # entity names and units as the ha-bambulab integration has them (printstream.sensors.yaml: printstream)
+  core: !include { file: core.sensors.yaml, vars: { status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+
+  ams_1: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "1", variant: "", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+  ams_2: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "2", variant: "", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+  ams_3: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "3", variant: "", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+  ams_4: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "4", variant: "", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+  ams_128: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "128", variant: "_single", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }
+  ams_129: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "129", variant: "_single", status_entity: print_status, progress_entity: print_progress, remaining_minutes_per_unit: "60.0f", remain_attribute: remain, drying_variant: "" } }

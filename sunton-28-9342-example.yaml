@@ -1,25 +1,18 @@
 esphome:
-  name: sunton-28-9342-test
-  friendly_name: Sunton 2.8" ILI9342 Test
-  # name_add_mac_suffix: true   # one image on several panels -- see the README
+  name: sunton-28-9342-example
+  friendly_name: Sunton 2.8" ILI9342 Example
+  # name_add_mac_suffix: true   # one image on several panels -- see docs/classic-layouts.md
+
+# Deprecated board: too slow for the full layout (layouts/ui), so it runs the simple one
+# with a page of lights. See docs/classic-layouts.md.
 
 substitutions:
-  home_page: lighting_1
+  home_page: lighting
 
 packages:
   common: !include common.yaml
   device: !include devices/ESP32-2432S028-9342.yaml
   layout: !include layouts/320x240.yaml
-  # pages, in navigation order -- or every page at once:
-  # pages: !include layouts/320x240/all.yaml
-  bedroom: !include layouts/320x240/pages/bedroom.yaml
-  living_room: !include layouts/320x240/pages/living_room.yaml
-  # climate: !include layouts/320x240/pages/climate.yaml  # thermostat and number steppers
-  lighting_1: !include layouts/320x240/pages/lighting_1.yaml
-  lighting_2: !include layouts/320x240/pages/lighting_2.yaml
-  lighting_3: !include layouts/320x240/pages/lighting_3.yaml
-  # printers_on_a_diet: !include layouts/320x240/pages/printers-on-a-diet.yaml  # see "Putting a low-memory panel on a diet" in the README
-  # optional features -- list them after layout:
-  # idle: !include features/idle/idle.yaml       # dim, go home and sleep when idle
-  # ceiling: !include features/idle/sun.yaml     # brightness follows the sun
-  # memory: !include features/diagnostics/memory.yaml  # heap and loop-time sensors
+  lighting: !include layouts/320x240/pages/lighting.yaml # a page of light tiles
+  # climate: !include layouts/320x240/pages/climate.yaml   # thermostat and number steppers
+  # printers-on-a-diet: !include layouts/320x240/pages/printers-on-a-diet.yaml   # Bambu printer tiles with AMS trays

@@ -1,0 +1,51 @@
+# A room the panel can dim with: adds it to "Auto-dim room" (in Settings and Home
+# Assistant). The panel dims while every light in the room is off or at 1%, judged from the
+# room's Home Assistant light group (its brightness is the average of the lights that are
+# on). Include once per room, as a package:
+#
+#   dim_bedroom: !include { file: ../layouts/ui/autodim_room.yaml, vars: { uid: bedroom, label: Bedroom, entity_id: light.bedroom_lights } }
+#
+# (from demo/pages.yaml or private/pages.yaml; demo/pages.yaml has three)
+#
+# required vars:
+#   uid:       a short id, unique per room
+#   label:     the room's name in the list
+#   entity_id: a light, or a light group covering the room
+
+text_sensor:
+  - id: ${uid}_autodim_state
+    platform: homeassistant
+    entity_id: ${entity_id}
+sensor:
+  - id: ${uid}_autodim_brightness
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: brightness
+
+esphome:
+  on_boot:
+    # put back the room chosen earlier (kept as a hash of its name). Before home_page_restored.
+    - priority: 0
+      then:
+        - if:
+            condition:
+              - lambda: return id(autodim_room_hash) == fnv1_hash("${label}");
+            then:
+              - select.set: { id: autodim_room, option: "${label}" }
+
+select:
+  - id: !extend autodim_room
+    options:
+      - "${label}"
+
+script:
+  - id: !extend autodim_check
+    then:
+      - lambda: |-
+          if (id(autodim_room).current_option() != "${label}")
+            return;
+          const std::string &s = id(${uid}_autodim_state).state;
+          if (!id(${uid}_autodim_state).has_state() || s == "unavailable" || s == "unknown")
+            return;  // Home Assistant away: don't dim
+          const float b = id(${uid}_autodim_brightness).state;
+          id(autodim_dark) = s == "off" || (!std::isnan(b) && b <= 4.0f);  // 1% of 255 is ~3

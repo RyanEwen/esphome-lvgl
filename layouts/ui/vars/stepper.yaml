@@ -1,0 +1,5 @@
+# A full-width stepper tile (widgets/stepper), and its - / + buttons and value.
+width: 100%
+height: ${tile_height}
+button_width: ${stepper_button_w}
+value_width: ${stepper_value_w}

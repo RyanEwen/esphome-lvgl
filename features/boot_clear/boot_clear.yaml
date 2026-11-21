@@ -1,0 +1,23 @@
+# An optional feature for panels NOT running an LVGL layout: include it from the config as
+#   boot_clear: !include features/boot_clear/boot_clear.yaml
+#
+# Paint the panel black once at boot, so neither the panel's uninitialized memory (noise)
+# nor the driver's test card shows while the device starts up.
+# For devices whose screen is drawn by something other than an ESPHome display lambda or
+# LVGL (e.g. remote_webview). Do NOT include on LVGL devices: LVGL draws the boot screen itself.
+esphome:
+  on_boot:
+    # After the display is set up (priority 400) but before Wi-Fi (250), so it can never
+    # erase anything remote_webview has already drawn.
+    priority: 300
+    then:
+      - component.update: main_display
+
+display:
+  - id: !extend main_display
+    # Only redraw when asked (the boot update above); otherwise this lambda would keep
+    # painting over remote_webview.
+    update_interval: never
+    auto_clear_enabled: false
+    lambda: |-
+      it.fill(Color::BLACK);

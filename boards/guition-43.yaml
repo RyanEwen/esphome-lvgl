@@ -1,0 +1,8 @@
+# Guition 4.3" JC4880P443C (ESP32-P4): 480x800 portrait MIPI-DSI panel, mic and speaker (voice: features/voice/voice.yaml).
+# A panel config includes this one file for the board: the hardware, the layout's sizes
+# for its screen, and the Cameras page that suits it. Adding a board: see docs/boards.md.
+
+packages:
+  device: !include ../devices/JC4880P443C.yaml
+  size: !include ../layouts/ui/sizes/480x800.yaml
+  cameras: !include ../layouts/ui/pages/cameras_p4.yaml

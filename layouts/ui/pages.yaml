@@ -1,0 +1,15 @@
+# The layout's built-in pages: Weather, Agenda (and its calendar settings), the photo
+# screensaver and Settings. Your own pages come in a file of yours: a Rooms page (the
+# first tab) and any room pages, as in demo/pages.yaml. The Cameras page depends on the
+# screen, so each board file includes the right one (boards/).
+#
+# Don't put top-level anchor keys (`.foo: &foo`) in included files: ESPHome then fails
+# validation with a misleading "[esphome] is an invalid option for [packages]"; define
+# anchors inline instead.
+
+packages:
+  weather: !include pages/weather.yaml
+  agenda: !include pages/agenda.yaml
+  agenda_settings: !include pages/agenda_settings.yaml # from the Agenda gear
+  screensaver: !include pages/screensaver.yaml # after a while untouched
+  settings: !include pages/settings.yaml # hold the clock

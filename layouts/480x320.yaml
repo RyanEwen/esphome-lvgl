@@ -1,16 +1,20 @@
 esphome:
   includes:
-    - widgets/printers/tray_color.h # tray::bg / tray::ink, shared by every tray pill
+    - widgets/parts/printers/tray_color.h # tray::bg / tray::ink, shared by every tray pill
   # Go home once everything is set up, rather than from splash's on_load: a
   # page.show inside the first page's own load event is dropped, and splash is
   # only the first page while no package adds one ahead of it.
   on_boot:
-    - priority: -50 # after page_access.yaml restores the Home page at 0
+    - priority: -50 # after layouts/common/page_access.yaml restores the Home page at 0
       then:
         - lambda: id(home_page_restored) = true;
     - priority: -100
       then:
         - script.execute: go_home
+
+substitutions:
+  tile_font: roboto_md # the tiles' name font (the shared tile widgets ask for one)
+  tile_font_size: 20 # its size (text_md below)
 
 font: !include
   file: fonts/fonts.yaml
@@ -32,13 +36,13 @@ font: !include
     padding: 8
 
 script:
-  # each page's page_access.yaml adds the line that shows it when it's home
+  # each page's layouts/common/page_access.yaml adds the line that shows it when it's home
   - id: go_home
     then: []
 
 select:
   # Which page is home, from Home Assistant; ${home_page} is the default.
-  # Each page's page_access.yaml adds itself to the list.
+  # Each page's layouts/common/page_access.yaml adds itself to the list.
   - id: home_page_select
     platform: template
     name: Home page
@@ -55,7 +59,7 @@ select:
 globals:
   # The select would restore its position in the list, which points at a
   # different page once pages are added or removed. So remember the page's
-  # name instead, as a hash, and page_access.yaml puts it back at boot.
+  # name instead, as a hash, and layouts/common/page_access.yaml puts it back at boot.
   - id: home_page_hash
     type: uint32_t
     restore_value: true
@@ -70,19 +74,19 @@ lvgl:
   theme: !include themes/main.yaml
   top_layer:
     widgets:
-      - <<: !include { file: widgets/header/widget.yaml, vars: { <<: *nav_widget_vars } }
-      - <<: !include { file: widgets/footer/widget.yaml, vars: { <<: *nav_widget_vars } }
-      - <<: !include { file: widgets/boot_screen/widget.yaml }
+      - <<: !include { file: common/header.yaml, vars: { <<: *nav_widget_vars } }
+      - <<: !include { file: common/footer.yaml, vars: { <<: *nav_widget_vars } }
+      - <<: !include { file: common/boot_screen.yaml }
   pages:
     - id: splash # blank until on_boot goes home
       skip: true
 
   # every other page is a package in layouts/480x320/pages/, listed by the
-  # top-level config after layout: -- see the README
+  # top-level config after layout: -- see docs/classic-layouts.md
 
 packages:
   # header
-  header_sensors: !include { file: widgets/header/sensors.yaml }
+  header: !include { file: common/header.logic.yaml }
 
   # boot screen
-  boot_screen_sensors: !include { file: widgets/boot_screen/sensors.yaml }
+  boot_screen: !include { file: common/boot_screen.logic.yaml }

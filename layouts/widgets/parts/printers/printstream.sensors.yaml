@@ -1,0 +1,13 @@
+# A printer from the printstream integration, one row per AMS unit (tile.yaml): the same card
+# as bambulab.sensors.yaml (ha-bambulab), reading printstream's names.
+#
+# required vars:
+# - uid
+# - entity_id_prefix   # printstream's entity ids start sensor.<prefix>_ (e.g. my_printer)
+
+packages:
+  core: !include { file: core.sensors.yaml, vars: { status_entity: status, progress_entity: progress, remaining_minutes_per_unit: "1.0f", remain_attribute: remain_percent, drying_variant: _printstream } }
+  ams_1: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "1", variant: "", status_entity: status, progress_entity: progress, remaining_minutes_per_unit: "1.0f", remain_attribute: remain_percent, drying_variant: _printstream } }
+  ams_2: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "2", variant: "", status_entity: status, progress_entity: progress, remaining_minutes_per_unit: "1.0f", remain_attribute: remain_percent, drying_variant: _printstream } }
+  ams_3: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "3", variant: "", status_entity: status, progress_entity: progress, remaining_minutes_per_unit: "1.0f", remain_attribute: remain_percent, drying_variant: _printstream } }
+  ams_4: !include { file: ams_unit.sensors.yaml, vars: { ams_id: "4", variant: "", status_entity: status, progress_entity: progress, remaining_minutes_per_unit: "1.0f", remain_attribute: remain_percent, drying_variant: _printstream } }

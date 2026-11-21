@@ -1,0 +1,360 @@
+# Screensaver: after a while untouched, the time, date, current weather and today's events,
+# over photos (optional) or a still image built into the firmware (optional), or black.
+# A tap on the weather opens Weather, on the events Agenda, anywhere else the home page.
+# Part of the panel layout (layouts/ui/pages.yaml).
+#
+# Photos (screensaver_photos: "true") come from the photo-frame service (tools/photo-frame),
+# cropped to the panel; two image buffers take turns, so the next photo loads into the
+# hidden one and then fades in over the current one. A still image: set ss_still at boot
+# (see demo/screensaver_still.yaml).
+#
+# Home Assistant settings: "Screensaver after" (seconds, 0 = never) and "Photo every"
+# (minutes). Substitutions: photo_url, photo_fade_ms (0 = cut, no fade).
+
+substitutions:
+  screensaver_after_default: "60" # seconds untouched before it shows (also on the device page in HA)
+  photo_minutes_default: "1"      # minutes between photos
+  photo_url: ${photo_server}/photo.jpg?w=${screen_w}&h=${screen_h}
+  photo_fade_ms: "800"
+
+http_request:
+  timeout: 20s
+  buffer_size_rx: 2048
+
+image:
+  # 480x800 RGB565 each (750 KB), in PSRAM
+  - platform: online_image
+    id: photo_a
+    url: ${photo_url}
+    format: JPEG
+    type: RGB565
+    resize: ${screen_w}x${screen_h}
+    on_download_finished:
+      - lambda: |-
+          lv_image_set_src(id(ss_photo_a), id(photo_a)->get_lv_image_dsc());
+          ui::photo_crossfade(id(ss_photo_a), id(ss_photo_b), ${photo_fade_ms});
+    on_error:
+      - logger.log: { level: WARN, format: "screensaver photo download failed" }
+  - platform: online_image
+    id: photo_b
+    url: ${photo_url}
+    format: JPEG
+    type: RGB565
+    resize: ${screen_w}x${screen_h}
+    on_download_finished:
+      - lambda: |-
+          lv_image_set_src(id(ss_photo_b), id(photo_b)->get_lv_image_dsc());
+          ui::photo_crossfade(id(ss_photo_b), id(ss_photo_a), ${photo_fade_ms});
+    on_error:
+      - logger.log: { level: WARN, format: "screensaver photo download failed" }
+
+font:
+  - id: clock_xl
+    file: { type: gfonts, family: Roboto, weight: 300 }
+    size: ${font_clock_xl}
+    bpp: 4
+    glyphs: "0123456789:"
+
+globals:
+  - id: ss_next_b # which buffer the next photo loads into
+    type: bool
+    initial_value: "false"
+  - id: ss_photo_at # millis() of the last photo change
+    type: uint32_t
+    initial_value: "0"
+  - id: ss_still # a built-in image to show when screensaver_photos is off (nullptr = black)
+    type: const lv_image_dsc_t *
+    initial_value: nullptr
+
+number:
+  - id: ss_after
+    platform: template
+    name: Screensaver after
+    icon: mdi:image-filter-hdr
+    entity_category: config
+    unit_of_measurement: s
+    mode: box
+    min_value: 0
+    max_value: 3600
+    step: 5
+    initial_value: ${screensaver_after_default}
+    optimistic: true
+    restore_value: true
+  - id: ss_photo_minutes
+    platform: template
+    name: Photo every
+    icon: mdi:image-multiple
+    entity_category: config
+    unit_of_measurement: min
+    mode: box
+    min_value: 1
+    max_value: 120
+    step: 1
+    initial_value: ${photo_minutes_default}
+    optimistic: true
+    restore_value: true
+
+button:
+  - platform: template
+    name: Next photo
+    icon: mdi:skip-next
+    entity_category: diagnostic
+    on_press:
+      - script.execute: ss_next_photo
+
+esphome:
+  on_boot:
+    - priority: -100
+      then:
+        - lambda: |-
+            ui::agenda_updated() = []() {
+              id(ss_agenda_render).execute();
+            };
+            ui::forecast_updated() = []() {
+              if (id(screensaver)->is_showing())
+                id(ss_clock).execute();
+            };
+
+script:
+  # today's events that haven't ended (re-run each minute while showing)
+  - id: ss_agenda_render
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          ui::clock_24h() = id(clock_24h).state;
+          ui::render_agenda(id(ss_agenda), ui::agenda_text(), ui::agenda_fonts(), 1, 6,
+                            now.is_valid() ? (time_t) now.timestamp : 0);
+          ui::clear_clickable(id(ss_agenda));  // taps on an event go to the panel
+
+  - id: ss_show
+    then:
+      - if:
+          condition:
+            lambda: return !id(screensaver)->is_showing();
+          then:
+            - lvgl.page.show: screensaver
+
+  # Load the next photo into the hidden buffer; it fades in when it arrives.
+  - id: ss_next_photo
+    mode: single
+    then:
+      - lambda: |-
+          if (!${screensaver_photos})
+            return;  // photos are off
+          id(ss_photo_at) = millis();
+          const bool b = id(ss_next_b);
+          id(ss_next_b) = !b;
+          // a different URL each time, so nothing along the way hands back the last one
+          const std::string url = std::string("${photo_url}") + "&n=" + std::to_string(millis());
+          auto *img = b ? id(photo_b) : id(photo_a);
+          img->set_url(url);
+          img->update();
+
+  - id: ss_clock
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          if (!now.is_valid())
+            return;
+          const bool h24 = id(clock_24h).state;  // the header's 24-hour time switch
+          char t[8];
+          snprintf(t, sizeof(t), h24 ? "%02d:%02d" : "%d:%02d", h24 ? now.hour : (now.hour + 11) % 12 + 1, now.minute);
+          lv_label_set_text(id(ss_time), t);
+          lv_label_set_text(id(ss_time_shadow), t);
+          const char *ap = h24 ? "" : (now.hour < 12 ? "AM" : "PM");
+          lv_label_set_text(id(ss_ampm), ap);
+          lv_label_set_text(id(ss_ampm_shadow), ap);
+          const std::string date = now.strftime("%A, %B ") + std::to_string(now.day_of_month);
+          lv_label_set_text(id(ss_date), date.c_str());
+          lv_label_set_text(id(ss_date_shadow), date.c_str());
+          // current weather, from the Weather page's sensors
+          const std::string cond = id(wx_condition).state;
+          const float temp = id(wx_temperature).state;
+          auto deg = [](float t) { return std::isnan(t) ? std::string("--") : std::to_string((int) lroundf(t)) + "°"; };
+          lv_label_set_text(id(ss_wx_icon), cond.empty() ? "" : ui::weather_icon(cond));
+          lv_obj_set_style_text_color(id(ss_wx_icon), ui::weather_color(cond), 0);
+          lv_label_set_text(id(ss_wx), deg(temp).c_str());
+          // today's range on the forecast's scale (shared with the days not shown), like the
+          // Today row on the Weather page
+          const auto &sc = ui::forecast_scale();
+          lv_label_set_text(id(ss_wx_lo), deg(sc.today_lo).c_str());
+          lv_label_set_text(id(ss_wx_hi), deg(sc.today_hi).c_str());
+          ui::set_range_fill(id(ss_wx_track), id(ss_wx_fill), sc.today_lo, sc.today_hi);
+          ui::place_now_marker(id(ss_wx_now), id(ss_wx_track), id(ss_wx_fill), temp);
+
+interval:
+  - interval: 1s
+    then:
+      - if:
+          condition:
+            lambda: return id(screensaver)->is_showing();
+          then:
+            - script.execute: ss_clock
+            - if:
+                condition:
+                  lambda: return id(ha_time).now().is_valid() && id(ha_time).now().second == 0;
+                then:
+                  - script.execute: ss_agenda_render
+            - if:
+                condition:
+                  lambda: return millis() - id(ss_photo_at) >= (uint32_t) (id(ss_photo_minutes).state * 60000.0f);
+                then:
+                  - script.execute: ss_next_photo
+
+lvgl:
+  on_idle:
+    - timeout: !lambda 'return id(ss_after).state > 0 ? (uint32_t) (id(ss_after).state * 1000.0f) : UINT32_MAX;'
+      then:
+        - script.execute: ss_show
+  pages:
+    - id: screensaver
+      skip: true
+      bg_color: 0x000000
+      bg_opa: COVER
+      pad_all: 0
+      scrollable: false
+      on_load:
+        # the header and tab bar live on top_layer, which draws over every page
+        - lvgl.widget.hide: [titlebar, navbar]
+        - script.execute: ss_clock
+        - lambda: |-
+            // photos off: show the built-in still image, if the config gave one
+            if (!${screensaver_photos} && id(ss_still) != nullptr) {
+              lv_image_set_src(id(ss_photo_a), id(ss_still));
+              lv_obj_set_style_opa(id(ss_photo_a), LV_OPA_COVER, 0);
+              lv_obj_remove_flag(id(ss_photo_a), LV_OBJ_FLAG_HIDDEN);
+            }
+        - lambda: |-
+            id(ss_agenda_render).execute();
+        - script.execute: ss_next_photo
+        - if:
+            condition:
+              lambda: return ui::agenda_text().empty();
+            then:
+              - script.execute: agenda_fetch
+        - if:
+            condition: # no forecast yet (the Weather page fetches it): fetch it for the range bar
+              lambda: return std::isnan(ui::forecast_scale().min_t);
+            then:
+              - script.execute: weather_fetch
+      on_unload:
+        - lvgl.widget.show: [titlebar, navbar]
+        # hand the photo buffers back (the Cameras page needs the memory)
+        - lambda: |-
+            lv_obj_add_flag(id(ss_photo_a), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(id(ss_photo_b), LV_OBJ_FLAG_HIDDEN);
+        - online_image.release: photo_a
+        - online_image.release: photo_b
+      on_press:
+        # drop the rest of this touch, or its release would land on the page underneath
+        - lambda: |-
+            lv_indev_wait_release(lv_indev_active());
+        - script.execute: go_home # anywhere but the weather or the agenda: the home page
+      widgets:
+        # the two photos: index 0 and 1 (ui::photo_crossfade keeps the newer one on top)
+        - image: { id: ss_photo_a, align: CENTER, src: photo_a, hidden: true, clickable: false }
+        - image: { id: ss_photo_b, align: CENTER, src: photo_b, hidden: true, clickable: false }
+        # time and date, each over a dark copy 2px down-right (LVGL has no text shadow)
+        - obj:
+            align: TOP_MID
+            y: ${ss_clock_y}
+            width: 100%
+            height: SIZE_CONTENT
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            clickable: false
+            scrollable: false
+            widgets:
+              - label: { id: ss_time_shadow, align: TOP_MID, x: "${ss_time_x + ss_shadow}", y: "${ss_shadow}", text: "", text_font: clock_xl, text_color: 0x000000, text_opa: 70% }
+              - label: { id: ss_time, align: TOP_MID, x: "${ss_time_x}", text: "", text_font: clock_xl, text_color: 0xFFFFFF }
+              - label: { id: ss_ampm_shadow, align: TOP_MID, x: "${ss_ampm_x + ss_shadow}", y: "${ss_ampm_y + ss_shadow}", text: " ", text_font: roboto_lg, text_color: 0x000000, text_opa: 70% }
+              - label: { id: ss_ampm, align: TOP_MID, x: "${ss_ampm_x}", y: "${ss_ampm_y}", text: " ", text_font: roboto_lg, text_color: 0xFFFFFF }
+              - label: { id: ss_date_shadow, align: TOP_MID, x: "${ss_shadow}", y: "${ss_date_y + ss_shadow}", text: " ", text_font: roboto_md, text_color: 0x000000, text_opa: 70% }
+              - label: { id: ss_date, align: TOP_MID, y: "${ss_date_y}", text: " ", text_font: roboto_md, text_color: 0xFFFFFF }
+        # along the bottom: the weather, and today's events under it, the same width
+        - obj:
+            align: BOTTOM_MID
+            y: -12
+            width: ${screen_w - 24}
+            height: SIZE_CONTENT
+            bg_opa: TRANSP
+            border_width: 0
+            pad_all: 0
+            clickable: false
+            scrollable: false
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              pad_row: 8
+            widgets:
+              - obj: # current weather, like the Today row on the Weather page
+                  width: 100%
+                  height: SIZE_CONTENT
+                  bg_color: 0x000000
+                  bg_opa: 72%
+                  radius: 12
+                  border_width: 0
+                  pad_all: 12
+                  clickable: true
+                  on_press:
+                    - lambda: lv_indev_wait_release(lv_indev_active());
+                    - lvgl.page.show: weather
+                  scrollable: false
+                  layout:
+                    type: FLEX
+                    flex_flow: ROW
+                    flex_align_main: SPACE_BETWEEN
+                    flex_align_cross: CENTER
+                    pad_column: 8
+                  widgets:
+                    - label: { id: ss_wx_icon, text: "", text_font: mdi_md }
+                    - label: { id: ss_wx, text: " ", text_font: roboto_md, text_color: 0xFFFFFF } # now
+                    - label: { id: ss_wx_lo, text: " ", text_font: roboto_sm, text_color: 0xFFFFFF, text_opa: 80%, pad_left: 6 }
+                    - obj: # today's range: ui::set_range_fill draws the fill
+                        id: ss_wx_track
+                        width: ${ss_track_w}
+                        height: 10
+                        radius: 5
+                        bg_color: 0xFFFFFF
+                        bg_opa: 15%
+                        border_width: 0
+                        pad_all: 0
+                        clickable: false
+                        scrollable: false
+                        widgets:
+                          - obj: { id: ss_wx_fill, x: 0, y: 0, width: 0, height: 100%, radius: 5, border_width: 0, pad_all: 0, bg_grad_dir: HOR, clickable: false, hidden: true }
+                    - label: { id: ss_wx_hi, text: " ", text_font: roboto_sm, text_color: 0xFFFFFF, text_opa: 80% }
+                    - obj: # where the temperature is now (ui::place_now_marker)
+                        id: ss_wx_now
+                        floating: true # placed by hand, not by the row
+                        width: 6
+                        height: 6
+                        radius: 3
+                        bg_color: 0xFFFFFF
+                        bg_opa: COVER
+                        border_width: 0
+                        pad_all: 0
+                        clickable: false
+                        hidden: true
+              - obj:
+                  id: ss_agenda
+                  width: 100%
+                  height: SIZE_CONTENT
+                  max_height: ${ss_agenda_max_h}
+                  bg_color: 0x000000
+                  bg_opa: 72%
+                  radius: 12
+                  border_width: 0
+                  pad_all: 12
+                  clickable: true
+                  on_press:
+                    - lambda: lv_indev_wait_release(lv_indev_active());
+                    - lvgl.page.show: agenda
+                  scrollable: false
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                    pad_row: 8
+                  widgets:
+                    - label: { text: " ", text_font: text_detail } # replaced by ui::render_agenda

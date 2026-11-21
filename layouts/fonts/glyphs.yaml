@@ -33,3 +33,27 @@
 - "\U000F0238" # fire
 - "\U000F0717" # snowflake
 - "\U000F0210" # fan
+- "\U000F0595" # weather-partly-cloudy (tab bar)
+- "\U000F0570" # view-agenda (tab bar)
+- "\U000F07AE" # cctv (tab bar)
+# weather conditions (Home Assistant's 15), for the Weather page and the screensaver
+- "\U000F0599" # weather-sunny (sunny)
+- "\U000F0594" # weather-night (clear-night)
+- "\U000F0590" # weather-cloudy (cloudy)
+- "\U000F0591" # weather-fog (fog)
+- "\U000F0592" # weather-hail (hail)
+- "\U000F0593" # weather-lightning (lightning)
+- "\U000F067E" # weather-lightning-rainy (lightning-rainy)
+- "\U000F0596" # weather-pouring (pouring)
+- "\U000F0597" # weather-rainy (rainy)
+- "\U000F0598" # weather-snowy (snowy)
+- "\U000F067F" # weather-snowy-rainy (snowy-rainy)
+- "\U000F059D" # weather-windy (windy)
+- "\U000F059E" # weather-windy-variant (windy-variant)
+- "\U000F05D6" # alert-circle-outline (exceptional)
+- "\U000F0493" # cog (agenda settings)
+- "\U000F04AD" # skip-next (room TV controls)
+- "\U000F04AE" # skip-previous (room TV controls)
+- "\U000F170F" # movie-play
+- "\U000F083B" # television-off
+- "\U000F036C" # microphone (voice pop-up)

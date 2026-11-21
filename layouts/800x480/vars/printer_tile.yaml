@@ -1,3 +1,0 @@
-# 800x480: a printer tile.
-<<: !include ../../styles/printer_tile.yaml
-pad_all: 8

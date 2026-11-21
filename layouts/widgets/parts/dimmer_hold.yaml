@@ -1,0 +1,11 @@
+# dimmer.yaml plus a long press that turns the light on at 1% -- for a bedside lamp.
+# Same vars and sensors (dimmer.sensors.yaml).
+
+# button:
+  <<: !include dimmer.yaml
+  on_long_press:
+    - homeassistant.action:
+        action: light.turn_on
+        data:
+          entity_id: ${entity_id}
+          brightness_pct: '1'

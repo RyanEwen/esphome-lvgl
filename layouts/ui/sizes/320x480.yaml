@@ -1,0 +1,72 @@
+# Sizes for a 320x480 portrait canvas (the 3.5" Guition JC3248W535, native portrait).
+# Include before layouts/ui/base.yaml. Values scaled from 480x800.yaml.
+substitutions:
+  screen_w: 320
+  screen_h: 480
+  text_sm: 18
+  text_md: 21
+  text_lg: 24
+  text_xl: 34
+  text_xxl: 44
+  icons_sm: 18
+  icons_md: 22
+  icons_lg: 28
+  icons_xl: 34
+  icons_xxl: 40
+  font_title: 17
+  font_detail: 14
+  font_caps: 11
+  font_day: 26
+  font_icon_xs: 14
+  font_temp_xl: 54
+  font_weather_xl: 78
+  font_clock_xl: 72
+  header_height: 44
+  footer_height: 56
+  nav_padding: 6
+  gap: 6
+  tile_height: 68
+  button_height: 44
+  tab_icon_y: -8
+  tab_text_y: 10
+  wx_now_h: 136
+  wx_row_h: 34
+  wx_row_gap: 4
+  wx_pad: 10
+  wx_icon_x: 62
+  wx_drop_x: 88
+  wx_rain_x: 102
+  wx_lo_x: 128
+  wx_num_w: 32
+  wx_track_x: 166
+  wx_track_w: 80
+  agenda_date_w: 44
+  ss_clock_y: 20
+  ss_time_x: -19
+  ss_ampm_x: 86
+  ss_ampm_y: 44
+  ss_date_y: 86
+  ss_track_w: 100
+  ss_agenda_max_h: 250
+  ss_shadow: 2
+  tile_font: tile_text
+  tile_font_size: 16
+  room_zone_w: 58
+  room_divider_x: 9
+  room_label_w: 54%
+  sdl_width: 320  # for the desktop preview (devices/SDL.yaml)
+  sdl_height: 480
+  tab_font_size: 15
+  # printer tiles: the AMS row must fit the tile, 34+5+60+5+188 = 292 of 292
+  printer_pad: 8
+  printer_row_gap: 4
+  printer_bar_h: 6
+  ams_label_w: 34
+  ams_hum_w: 60
+  ams_hum_value_w: 20
+  ams_strip_w: 188 # 4 trays of 44 and 3 gaps of 4
+  ams_tray_w: 44
+  ams_tray_h: 22
+  ams_tray_pad: 4
+  stepper_button_w: 44
+  stepper_value_w: 56

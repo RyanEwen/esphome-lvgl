@@ -1,0 +1,331 @@
+# Settings: display brightness, auto-dim tied to a room's lights, and the panel's
+# connection details. Opened by holding the clock in the title bar (not a tab).
+# Part of the panel layout (layouts/ui/pages.yaml).
+#
+# Auto-dim: when every light in the chosen room is off or at its lowest (1%), the display
+# drops to "Dimmed brightness", whatever is on screen, until a light there comes up. A room's state
+# comes from its Home Assistant light group, whose brightness is the average of the
+# lights that are on, so "at most ~1%" means every light that's on is at 1%.
+#
+# The settings are also Home Assistant entities (Display brightness, Auto-dim room,
+# Dimmed brightness), kept on the panel across reboots.
+
+substitutions:
+  autodim_room_default: "None" # a panel config can set its room, e.g. "Bedroom"
+
+globals:
+  - id: autodim_dark # the chosen room is dark (set by autodim_check)
+    type: bool
+    initial_value: "false"
+  # The chosen room, as a hash of its name: the select would restore its position in the
+  # list, which points at another room once rooms are added or removed (as for Home page).
+  - id: autodim_room_hash
+    type: uint32_t
+    restore_value: true
+    initial_value: "0"
+  - id: autodim_applied # the brightness last set by apply_brightness (-1 = none yet)
+    type: float
+    initial_value: "-1"
+
+number:
+  - id: display_brightness
+    platform: template
+    name: Display brightness
+    icon: mdi:brightness-6
+    entity_category: config
+    unit_of_measurement: "%"
+    mode: slider
+    min_value: 5
+    max_value: 100
+    step: 5
+    initial_value: 100
+    optimistic: true
+    restore_value: true
+    on_value:
+      - lambda: |-
+          if (id(set_brightness) == nullptr)
+            return;  // restored at boot, before LVGL has built the page
+          lv_slider_set_value(id(set_brightness), (int32_t) x, LV_ANIM_OFF);
+          lv_label_set_text(id(set_brightness_val), (std::to_string((int) x) + "%").c_str());
+      - script.execute: apply_brightness
+  - id: autodim_level
+    platform: template
+    name: Dimmed brightness
+    icon: mdi:brightness-4
+    entity_category: config
+    unit_of_measurement: "%"
+    mode: slider
+    min_value: 1
+    max_value: 50
+    step: 1
+    initial_value: 10
+    optimistic: true
+    restore_value: true
+    on_value:
+      - lambda: |-
+          if (id(set_dim) == nullptr)
+            return;
+          lv_slider_set_value(id(set_dim), (int32_t) x, LV_ANIM_OFF);
+          lv_label_set_text(id(set_dim_val), (std::to_string((int) x) + "%").c_str());
+      - script.execute: apply_brightness
+
+select:
+  - id: autodim_room
+    platform: template
+    name: Auto-dim room
+    icon: mdi:home-lightbulb
+    entity_category: config
+    options: ["None"] # each layouts/ui/autodim_room.yaml package adds its room
+    initial_option: "${autodim_room_default}"
+    optimistic: true
+    on_value:
+      - lambda: |-
+          if (id(set_room) != nullptr && id(set_room)->obj != nullptr)
+            lv_dropdown_set_selected(id(set_room)->obj, i);
+          if (id(home_page_restored))  // after the boot-time restore below
+            id(autodim_room_hash) = fnv1_hash(x);
+      - script.execute: apply_brightness
+
+script:
+  - id: settings_open
+    then:
+      - lvgl.page.show: settings
+
+  # Sets autodim_dark for the chosen room; each autodim_room.yaml package adds its check.
+  - id: autodim_check
+    then:
+      - lambda: id(autodim_dark) = false;
+
+  # Sets the backlight: the dimmed level while the chosen room is dark, the display
+  # brightness otherwise. Only touches the light on a change.
+  - id: apply_brightness
+    then:
+      - lambda: |-
+          id(autodim_check).execute();  // runs straight through: lambdas only
+          const bool dark = id(autodim_dark);
+          // dimmed never brighter than the display brightness itself
+          const float target = (dark ? std::min(id(autodim_level).state, id(display_brightness).state)
+                                     : id(display_brightness).state) / 100.0f;
+          // also put it back when something else changed the backlight (an HA automation or
+          // the Backlight light): this panel's brightness settings are the ones that count
+          const auto &cur = id(backlight).remote_values;
+          if (target == id(autodim_applied) && cur.is_on() && fabsf(cur.get_brightness() - target) < 0.02f)
+            return;
+          id(autodim_applied) = target;
+          auto call = id(backlight).turn_on();
+          call.set_brightness(target);
+          call.set_transition_length(800);
+          call.perform();
+
+  - id: settings_refresh
+    then:
+      - lambda: |-
+          auto set = [](lv_obj_t *l, const std::string &s) { lv_label_set_text(l, s.c_str()); };
+          set(id(set_ip), id(net_ip).state.empty() ? "--" : id(net_ip).state);
+          const float sig = id(wifi_signal_strength).state;
+          set(id(set_wifi), id(net_ssid).state.empty() ? "Not connected"
+              : id(net_ssid).state + (std::isnan(sig) ? "" : "  -  " + std::to_string((int) sig) + "%"));
+          const bool ha = api::global_api_server != nullptr && api::global_api_server->is_connected();
+          set(id(set_ha), ha ? "Connected" : "Not connected");
+          lv_obj_set_style_text_color(id(set_ha), lv_color_hex(ha ? 0x66BB6A : 0xFF6B60), 0);
+          const uint32_t up = (uint32_t) std::chrono::duration_cast<std::chrono::seconds>(
+              std::chrono::steady_clock::now().time_since_epoch()).count();  // since boot
+          char buf[48];
+          snprintf(buf, sizeof(buf), "%ud %uh %um", (unsigned) (up / 86400), (unsigned) (up / 3600 % 24),
+                   (unsigned) (up / 60 % 60));
+          set(id(set_uptime), buf);
+          set(id(set_name), App.get_friendly_name().empty() ? App.get_name() : App.get_friendly_name());
+          set(id(set_fw), std::string("ESPHome ") + ESPHOME_VERSION);
+
+interval:
+  - interval: 2s
+    then:
+      - script.execute: apply_brightness
+      - if:
+          condition:
+            lambda: return id(settings)->is_showing();
+          then:
+            - script.execute: settings_refresh
+
+esphome:
+  on_boot:
+    - priority: -100 # after LVGL has built the header
+      then:
+        # holding the clock opens Settings (the clock's row, so the hold target is bigger
+        # than the digits)
+        - lambda: |-
+            lv_obj_t *clock_row = lv_obj_get_parent(id(nav_clock));
+            lv_obj_add_flag(clock_row, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_set_ext_click_area(clock_row, 12);
+            lv_obj_add_event_cb(clock_row, [](lv_event_t *) { id(settings_open).execute(); },
+                                LV_EVENT_LONG_PRESSED, nullptr);
+
+lvgl:
+  pages:
+    - id: settings
+      skip: true # opened by holding the clock
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C
+      on_load:
+        - lvgl.label.update: { id: page_title, text: Settings }
+        - script.execute: { id: tab_select, page: settings } # no tab: all off
+        - lambda: |-
+            lv_slider_set_value(id(set_brightness), (int32_t) id(display_brightness).state, LV_ANIM_OFF);
+            lv_label_set_text(id(set_brightness_val), (std::to_string((int) id(display_brightness).state) + "%").c_str());
+            lv_slider_set_value(id(set_dim), (int32_t) id(autodim_level).state, LV_ANIM_OFF);
+            lv_label_set_text(id(set_dim_val), (std::to_string((int) id(autodim_level).state) + "%").c_str());
+            {  // the auto-dim rooms this panel knows
+              std::string opts;
+              for (const auto &o : id(autodim_room).traits.get_options())
+                opts += (opts.empty() ? "" : "\n") + std::string(o);
+              lv_dropdown_set_options(id(set_room)->obj, opts.c_str());
+              lv_dropdown_set_selected(id(set_room)->obj, id(autodim_room).active_index().value_or(0));
+            }
+            {  // the Home page list: whatever pages this panel has
+              std::string opts;
+              for (const auto &o : id(home_page_select).traits.get_options())
+                opts += (opts.empty() ? "" : "\n") + std::string(o);
+              lv_dropdown_set_options(id(set_home)->obj, opts.c_str());
+              lv_dropdown_set_selected(id(set_home)->obj, id(home_page_select).active_index().value_or(0));
+            }
+        - script.execute: settings_refresh
+      widgets:
+        - obj:
+            width: 100%
+            height: 100%
+            bg_opa: TRANSP
+            border_width: 0
+            radius: 0
+            pad_top: 10
+            pad_bottom: 16
+            pad_left: 10
+            pad_right: 10
+            scrollable: true
+            scroll_dir: VER
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              pad_row: 10
+            widgets:
+              # ---- Display
+              - obj:
+                  <<: &card
+                    width: 100%
+                    height: SIZE_CONTENT
+                    bg_color: 0x3C3C3C
+                    radius: 10
+                    border_width: 0
+                    pad_all: 14
+                    scrollable: false
+                    layout:
+                      type: FLEX
+                      flex_flow: COLUMN
+                      pad_row: 12
+                  widgets:
+                    - label: { text: Display, text_font: roboto_sm, text_opa: 60% }
+                    - obj:
+                        <<: &row
+                          width: 100%
+                          height: SIZE_CONTENT
+                          bg_opa: TRANSP
+                          border_width: 0
+                          pad_all: 0
+                          scrollable: false
+                        widgets:
+                          - label: { align: LEFT_MID, text: Home page, text_font: roboto_sm }
+                    - dropdown: # filled from the Home page select when the page opens
+                        id: set_home
+                        width: 100%
+                        options: ["Rooms"]
+                        text_font: roboto_sm
+                        symbol: "\U000F0140"
+                        indicator:
+                          text_font: mdi_sm
+                        dropdown_list:
+                          text_font: roboto_sm
+                          max_height: 360
+                        on_change:
+                          - select.set_index: { id: home_page_select, index: !lambda return x; }
+                    - obj:
+                        <<: *row
+                        widgets:
+                          - label: { align: LEFT_MID, text: Brightness, text_font: roboto_sm }
+                          - label: { id: set_brightness_val, align: RIGHT_MID, text: "", text_font: roboto_sm, text_opa: 70% }
+                    - obj: # inset, so the slider's ends are easy to reach
+                        <<: *row
+                        pad_left: ${3 * gap}
+                        pad_right: ${3 * gap}
+                        pad_top: ${gap}
+                        pad_bottom: ${gap}
+                        widgets:
+                          - slider:
+                              id: set_brightness
+                              width: 100%
+                              height: 14
+                              min_value: 5
+                              max_value: 100
+                              value: 100
+                              knob: { pad_all: 8 }
+                              on_value:
+                                - lambda: lv_label_set_text(id(set_brightness_val), (std::to_string((int) x) + "%").c_str());
+                              on_release:
+                                - number.set: { id: display_brightness, value: !lambda return x; }
+              # ---- Auto-dim
+              - obj:
+                  <<: *card
+                  widgets:
+                    - label: { text: Auto-dim, text_font: roboto_sm, text_opa: 60% }
+                    - label:
+                        width: 100%
+                        text: Dim the display while this room's lights are all off or at 1%.
+                        text_font: text_detail
+                        text_opa: 70%
+                    - dropdown:
+                        id: set_room
+                        width: 100%
+                        options: ["None"] # filled from the Auto-dim room select when the page opens
+                        selected_index: 0
+                        text_font: roboto_sm
+                        symbol: "\U000F0140" # chevron-down: the text font has no LVGL symbols
+                        indicator:
+                          text_font: mdi_sm
+                        dropdown_list:
+                          text_font: roboto_sm
+                          max_height: 360
+                        on_change:
+                          - select.set_index: { id: autodim_room, index: !lambda return x; }
+                    - obj:
+                        <<: *row
+                        widgets:
+                          - label: { align: LEFT_MID, text: Dimmed brightness, text_font: roboto_sm }
+                          - label: { id: set_dim_val, align: RIGHT_MID, text: "", text_font: roboto_sm, text_opa: 70% }
+                    - obj: # inset, so the slider's ends are easy to reach
+                        <<: *row
+                        pad_left: ${3 * gap}
+                        pad_right: ${3 * gap}
+                        pad_top: ${gap}
+                        pad_bottom: ${gap}
+                        widgets:
+                          - slider:
+                              id: set_dim
+                              width: 100%
+                              height: 14
+                              min_value: 1
+                              max_value: 50
+                              value: 10
+                              knob: { pad_all: 8 }
+                              on_value:
+                                - lambda: lv_label_set_text(id(set_dim_val), (std::to_string((int) x) + "%").c_str());
+                              on_release:
+                                - number.set: { id: autodim_level, value: !lambda return x; }
+              # ---- Device
+              - obj:
+                  <<: *card
+                  widgets:
+                    - label: { text: Device, text_font: roboto_sm, text_opa: 60% }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: Name, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_name, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: IP address, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_ip, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: Wi-Fi, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_wifi, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: Home Assistant, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_ha, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: Uptime, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_uptime, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }
+                    - obj: { <<: *row, widgets: [ { label: { align: LEFT_MID, text: Firmware, text_font: roboto_sm, text_opa: 70% } }, { label: { id: set_fw, align: RIGHT_MID, text: "", text_font: roboto_sm } } ] }

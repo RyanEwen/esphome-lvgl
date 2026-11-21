@@ -1,0 +1,60 @@
+# Demo: one page of light tiles for this small screen. The full layout (layouts/ui: rooms,
+# weather, agenda, screensaver) needs a faster board, so this size keeps the simple one.
+# Tap a tile to toggle the light; each tile needs its sensors package below.
+
+lvgl:
+  pages:
+    - id: lighting
+      <<: !include ../vars/page.yaml
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Lighting
+      widgets:
+        - obj:
+            <<: !include ../vars/container.yaml
+            layout:
+              <<: !include ../vars/button_layout.yaml
+            widgets:
+              - button: # Living Room
+                  <<: !include
+                    file: ../../widgets/parts/light.yaml
+                    vars:
+                      uid: living_room_lights
+                      entity_id: light.living_room_lights
+                      text: Living Room
+                      <<: !include ../vars/button.yaml
+
+              - button: # Kitchen
+                  <<: !include
+                    file: ../../widgets/parts/light.yaml
+                    vars:
+                      uid: kitchen_lights
+                      entity_id: light.kitchen_lights
+                      text: Kitchen
+                      <<: !include ../vars/button.yaml
+
+              - button: # Bedroom
+                  <<: !include
+                    file: ../../widgets/parts/light.yaml
+                    vars:
+                      uid: bedroom_lights
+                      entity_id: light.bedroom_lights
+                      text: Bedroom
+                      <<: !include ../vars/button.yaml
+
+              - button: # Porch
+                  <<: !include
+                    file: ../../widgets/parts/light.yaml
+                    vars:
+                      uid: porch_light
+                      entity_id: light.porch_light
+                      text: Porch
+                      <<: !include ../vars/button.yaml
+
+packages:
+  living_room_lights_sensors: !include { file: ../../widgets/parts/light.sensors.yaml, vars: { uid: living_room_lights, entity_id: light.living_room_lights } }
+  kitchen_lights_sensors: !include { file: ../../widgets/parts/light.sensors.yaml, vars: { uid: kitchen_lights, entity_id: light.kitchen_lights } }
+  bedroom_lights_sensors: !include { file: ../../widgets/parts/light.sensors.yaml, vars: { uid: bedroom_lights, entity_id: light.bedroom_lights } }
+  porch_light_sensors: !include { file: ../../widgets/parts/light.sensors.yaml, vars: { uid: porch_light, entity_id: light.porch_light } }
+  lighting_access: !include { file: ../../common/page_access.yaml, vars: { page: lighting } }

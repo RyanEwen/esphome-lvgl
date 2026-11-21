@@ -1,0 +1,25 @@
+# A TV card, the page wide: what's on, and power / previous / play-pause / next.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: the media_player, e.g. media_player.bedroom_tv
+#   text:      the card's name (default TV)
+#   uid:       a unique id for its widgets (default: the entity id after the dot, less
+#              any _tv on the end)
+
+defaults:
+  uid: ${entity_id.split(".")[1].removesuffix("_tv")} # media_player.bedroom_tv: bedroom
+  text: TV
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - obj:
+                  <<: !include { file: parts/tv.yaml, vars: { uid: "${uid}", entity_id: "${entity_id}", text: "${text}" } }
+
+packages:
+  sensors: !include { file: parts/tv.sensors.yaml, vars: { uid: "${uid}", entity_id: "${entity_id}" } }

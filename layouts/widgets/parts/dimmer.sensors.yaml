@@ -1,0 +1,13 @@
+# State for a dimmer tile (dimmer.yaml): on/off for the bar, brightness for the pop-up.
+#
+# required vars:
+# - uid
+# - entity_id
+
+<<: !include base/stateful.sensors.yaml
+
+sensor:
+  - id: ${uid}_brightness
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: brightness

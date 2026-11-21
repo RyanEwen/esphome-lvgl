@@ -1,0 +1,2 @@
+# A printer's progress bar.
+bar_height: ${printer_bar_h}

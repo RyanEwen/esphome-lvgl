@@ -1,0 +1,35 @@
+# A number or input_number, the page wide, on a - / + stepper: a setpoint, a timer length.
+# Its range and step come from the entity.
+#
+# vars:
+#   page:      the page it goes on (widgets/page.yaml)
+#   entity_id: e.g. input_number.boost_minutes
+#   text:      its name
+#   icon:      an MDI glyph (layouts/fonts/glyphs.yaml)
+#   unit:      shown after the value (default none)
+#   uid:       a unique id for its widgets (default: the entity id after the dot)
+
+defaults:
+  uid: ${entity_id.split(".")[1]}
+  unit: ""
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - obj:
+                  <<: !include
+                    file: parts/number.yaml
+                    vars:
+                      uid: ${uid}
+                      text: ${text}
+                      icon: ${icon}
+                      <<: !include ../ui/vars/stepper.yaml
+
+packages:
+  sensors: !include
+    file: parts/number.sensors.yaml
+    vars: { uid: "${uid}", entity_id: "${entity_id}", domain: "${entity_id.split('.')[0]}", unit: "${unit}" }

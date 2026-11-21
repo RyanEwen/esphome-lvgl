@@ -1,0 +1,17 @@
+# Photo frame service for the screensaver: serves photos cropped to each panel's screen,
+# from a folder (./photos, the default; a demo photo is in it) or an Immich album (set it
+# up in .env, from .env.example). Then:  docker compose up -d
+# Panels fetch http://<this host>:8000/photo.jpg?w=<width>&h=<height>. In your panel
+# config set screensaver_photos: "true" and photo_server: http://<this host>:8000.
+services:
+  photo-frame:
+    container_name: photo-frame
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false # not needed for a folder of photos
+    volumes:
+      - ./photos:/photos:ro
+    ports:
+      - "8000:8000"

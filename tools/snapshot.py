@@ -92,10 +92,10 @@ def main():
     resolved = r.stdout
     if "platform: sdl" not in resolved:
         sys.exit(f"{args.config} doesn't use the SDL display; snapshots need a host build")
-    name = re.search(r"^esphome:\n(?:  .*\n)*?  name: (\S+)", resolved, re.M).group(1)
+    name = re.search(r"^esphome:\n(?:(?:  .*)?\n)*?  name: (\S+)", resolved, re.M).group(1)
     # only the pages under lvgl: -> pages:, not msgboxes or other id lists.
     # `lvgl:` resolves to a list, so pages: sits at 4 spaces, its entries at 6.
-    pg = re.search(r"^ {2,4}pages:\n((?:(?: {6,}.*)?\n)*)", resolved, re.M)
+    pg = re.search(r"^ {2,4}(?:- )?pages:\n((?:(?: {6,}.*)?\n)*)", resolved, re.M)
     block = pg.group(1) if pg else ""
     pages = []
     for m in re.finditer(r"^      - id: (\w+)\n((?:        .*\n)*)", block, re.M):

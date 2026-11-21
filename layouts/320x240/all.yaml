@@ -1,13 +1,7 @@
-# Every 320x240 page, in navigation order. A top-level config can include this
-# in place of listing its pages one by one:
-#
-#   pages: !include layouts/320x240/all.yaml
+# The 320x240 demo. lighting is the page the examples use; the others are opt-in:
+# uncomment them here, or include them from the config, after layout:.
 
 packages:
-  bedroom: !include pages/bedroom.yaml
-  living_room: !include pages/living_room.yaml
-  # climate: !include pages/climate.yaml  # opt in: thermostat and number steppers
-  lighting_1: !include pages/lighting_1.yaml
-  lighting_2: !include pages/lighting_2.yaml
-  lighting_3: !include pages/lighting_3.yaml
-  # printers_on_a_diet: !include pages/printers-on-a-diet.yaml  # opt in: see "Putting a low-memory panel on a diet" in the README
+  lighting: !include pages/lighting.yaml
+  # climate: !include pages/climate.yaml   # thermostat and number steppers (placeholder entities)
+  # printers-on-a-diet: !include pages/printers-on-a-diet.yaml   # Bambu printer tiles with AMS trays

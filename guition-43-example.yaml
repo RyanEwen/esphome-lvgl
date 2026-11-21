@@ -1,0 +1,18 @@
+esphome:
+  name: guition-43-example
+  friendly_name: Guition 4.3" Example
+
+# The panel layout with the demo house, on the 4.3" Guition (JC4880P443C, ESP32-P4), with voice: say "Okay Nabu".
+# Make it yours: docs/getting-started.md.
+
+substitutions:
+  home_page: Rooms # the page it opens on (also a dropdown in Settings: hold the clock)
+  # weather_entity: weather.forecast_home  # ... and the others listed in layouts/ui/main.yaml
+
+packages:
+  common: !include common.yaml               # Wi-Fi, API, OTA, a few diagnostics
+  board: !include boards/guition-43.yaml        # the hardware, sized for this screen
+  ui: !include layouts/ui/layout.yaml        # the layout: header, tabs, Weather, Agenda, ...
+  rooms: !include demo/pages.yaml # Rooms tab and each room's page: the part you write
+  voice: !include features/voice/voice.yaml  # wake word, Assist, a pop-up with the reply
+

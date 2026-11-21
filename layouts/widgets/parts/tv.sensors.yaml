@@ -1,0 +1,53 @@
+# The TV card's state from Home Assistant (see tv.yaml; same vars).
+#
+# required vars:
+# - uid
+# - entity_id
+
+text_sensor:
+  - id: ${uid}_tv_state
+    platform: homeassistant
+    entity_id: ${entity_id}
+    on_value:
+      - script.execute: ${uid}_tv_refresh
+  - id: ${uid}_tv_title
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: media_title
+    on_value:
+      - script.execute: ${uid}_tv_refresh
+  - id: ${uid}_tv_app
+    platform: homeassistant
+    entity_id: ${entity_id}
+    attribute: app_name
+    on_value:
+      - script.execute: ${uid}_tv_refresh
+
+script:
+  - id: ${uid}_tv_refresh
+    then:
+      - lambda: |-
+          const std::string s = id(${uid}_tv_state).state;
+          const bool on = !s.empty() && s != "off" && s != "standby" && s != "unavailable" && s != "unknown";
+          std::string what = id(${uid}_tv_title).state;
+          if (what.empty() || what == "unknown" || what == "None")
+            what = id(${uid}_tv_app).state;
+          if (what == "unknown" || what == "None")
+            what.clear();
+          std::string status;
+          if (s == "playing" || s == "paused" || s == "buffering")
+            status = std::string(s == "playing" ? "Playing" : s == "paused" ? "Paused" : "Loading") +
+                     (what.empty() ? "" : " - " + what);
+          else if (on)
+            status = what.empty() ? "On" : what;
+          else
+            status = s == "unavailable" || s.empty() ? "Unavailable" : "Off";
+          lv_label_set_text(id(${uid}_tv_status), status.c_str());
+          lv_label_set_text(id(${uid}_tv_icon), on ? "\U000F0502" : "\U000F083B");
+          lv_obj_set_style_text_color(id(${uid}_tv_icon), lv_color_hex(on ? 0x4FC3F7 : 0xFFFFFF), 0);
+          for (lv_obj_t *b : {id(${uid}_tv_prev), id(${uid}_tv_play), id(${uid}_tv_next)}) {
+            if (on)
+              lv_obj_remove_state(b, LV_STATE_DISABLED);
+            else
+              lv_obj_add_state(b, LV_STATE_DISABLED);
+          }

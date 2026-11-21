@@ -1,0 +1,4 @@
+# A page's padding: room for the header and the tab bar (sizes in ui/sizes/).
+<<: !include ../../styles/page_styles.yaml
+pad_top: ${header_height}
+pad_bottom: ${footer_height}

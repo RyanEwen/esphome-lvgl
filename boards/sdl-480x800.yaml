@@ -1,0 +1,8 @@
+# Desktop preview (SDL), 480x800: no camera, so a stand-in Cameras page.
+# A panel config includes this one file for the board: the hardware, the layout's sizes
+# for its screen, and the Cameras page that suits it. Adding a board: see docs/boards.md.
+
+packages:
+  device: !include ../devices/SDL.yaml
+  size: !include ../layouts/ui/sizes/480x800.yaml
+  cameras: !include ../layouts/ui/pages/cameras_preview.yaml

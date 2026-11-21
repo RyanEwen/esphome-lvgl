@@ -1,0 +1,79 @@
+# Navigation: one tab per page (Rooms, Weather, Agenda, Cameras), icon over label,
+# dividers between them, the current page highlighted. Part of the panel layout: ui/base.yaml
+# puts it on the top layer at the footer_height of the screen (ui/sizes/), and ui/main.yaml's
+# tab_select highlights the tab for the page showing.
+#
+# required vars:
+# - height
+
+obj: # navigation bar
+  id: navbar
+  width: 100%
+  height: ${height}
+  bg_color: 0x2B2B2B
+  border_width: 0
+  border_side: TOP # a hairline along the top, against the page
+  radius: 0
+  pad_all: 6 # the selected tab sits inside the bar, clear of its edges
+  align: BOTTOM_MID
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_main: CENTER
+    flex_align_cross: CENTER
+    pad_column: 0
+  widgets:
+    - button:
+        id: tab_rooms
+        <<: &tab_style
+          height: 100%
+          flex_grow: 1
+          bg_color: 0x2B2B2B
+          border_width: 0
+          radius: 10 # the selected tab: a rounded pill
+          pad_all: 0
+          shadow_width: 0
+          checked:
+            bg_color: 0x1E6FD9
+        on_click:
+          - lvgl.page.show: rooms
+        widgets:
+          - label: { <<: &tab_icon { align: CENTER, y: "${tab_icon_y}", text_font: mdi_md }, text: "\U000F02DC" } # home (a house)
+          - label: { <<: &tab_text { align: CENTER, y: "${tab_text_y}", text_font: tab_text }, text: Rooms }
+    - obj: &tab_divider # like the room tiles' chevron divider
+        width: 1
+        height: 56%
+        margin_left: 4 # room between the divider and a selected tab
+        margin_right: 4
+        bg_color: 0xFFFFFF
+        bg_opa: 15%
+        border_width: 0
+        radius: 0
+        pad_all: 0
+        clickable: false
+    - button:
+        id: tab_weather
+        <<: *tab_style
+        on_click:
+          - lvgl.page.show: weather
+        widgets:
+          - label: { <<: *tab_icon, text: "\U000F0595" } # weather-partly-cloudy
+          - label: { <<: *tab_text, text: Weather }
+    - obj: *tab_divider
+    - button:
+        id: tab_agenda
+        <<: *tab_style
+        on_click:
+          - lvgl.page.show: agenda
+        widgets:
+          - label: { <<: *tab_icon, text: "\U000F0570" } # view-agenda
+          - label: { <<: *tab_text, text: Agenda }
+    - obj: *tab_divider
+    - button:
+        id: tab_cameras
+        <<: *tab_style
+        on_click:
+          - lvgl.page.show: cameras
+        widgets:
+          - label: { <<: *tab_icon, text: "\U000F07AE" } # cctv
+          - label: { <<: *tab_text, text: Cameras }

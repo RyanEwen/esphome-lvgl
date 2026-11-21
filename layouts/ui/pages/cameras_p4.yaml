@@ -1,0 +1,333 @@
+# Cameras on the 4.3" Guition (ESP32-P4, 480x800 native portrait, MIPI-DSI): two go2rtc
+# MJPEG feeds stacked, a picker under each, tap a feed for fullscreen. Streams run only while
+# the page is showing. The camera component draws straight to the panel (hardware JPEG
+# decode); with no rotation its windows are screen coordinates. Content area y 65..719:
+#   y  65-334  top feed     (esp_<camera>_480, 480x270)    y 335-390  top picker
+#   y 391-660  bottom feed                                  y 661-716  bottom picker
+#   fullscreen: 480x680 at y 60 (esp_<camera>_full_480, rotated), header and tab bar hidden
+
+esp32:
+  framework:
+    sdkconfig_options:
+      # Not CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP (the S3 pages set it): the P4's Wi-Fi runs
+      # over SDIO to its C6 co-processor and wants internal DMA memory.
+      # 32 KB TCP receive window (default 5.7 KB): with the small window the board was
+      # window-limited ~65% of the time, video backed up on the server for seconds, then
+      # arrived in a fast-forward burst. Same setting as the 3.5" camera viewers.
+      CONFIG_LWIP_TCP_WND_DEFAULT: "32768"
+      CONFIG_LWIP_TCP_RECVMBOX_SIZE: "32"
+    components:
+      - name: "bitbank2/jpegdec"
+        source: https://github.com/strange-v/jpegdec-esphome
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [mjpeg_stream]
+
+mjpeg_stream:
+  - id: feed_top
+    display_id: main_display
+    autostart: false
+    x: 0
+    y: 65
+    width: 480
+    height: 270
+    max_width: 480 # fullscreen
+    max_height: 680
+    max_frame_size: 262144
+    push_rows: 0 # MIPI-DSI copies into its own framebuffer
+    big_endian: false # this panel takes little-endian RGB565
+    release_when_stopped: true # the memory goes to the screensaver photos while off this page
+    on_first_frame:
+      - lambda: |-
+          lv_obj_add_flag(id(cam_top_loading), LV_OBJ_FLAG_HIDDEN);
+          lv_obj_add_flag(id(cam_full_overlay), LV_OBJ_FLAG_HIDDEN);
+          lv_refr_now(nullptr);  // repaint now, before this frame is drawn over it
+  - id: feed_bottom
+    display_id: main_display
+    autostart: false
+    x: 0
+    y: 391
+    width: 480
+    height: 270
+    max_frame_size: 131072 # detailed 480x270 frames can exceed 64 KB
+    push_rows: 0
+    big_endian: false
+    release_when_stopped: true # the memory goes to the screensaver photos while off this page
+    on_first_frame:
+      - lambda: |-
+          lv_obj_add_flag(id(cam_bottom_loading), LV_OBJ_FLAG_HIDDEN);
+          lv_refr_now(nullptr);
+
+# Which camera each slot shows, also settable from Home Assistant. Option order must match
+# the picker buttons and cam_keys.
+select:
+  - platform: template
+    id: cam_top_select
+    name: Top Camera
+    icon: mdi:cctv
+    options: ["${cam_1_name}", "${cam_2_name}", "${cam_3_name}", "${cam_4_name}"]
+    initial_option: "${cam_1_name}"
+    optimistic: true
+    restore_value: true
+    on_value:
+      - script.execute: { id: cam_show_loading, slot: 0 }
+      - script.execute: cam_apply_urls
+      - script.execute: cam_sync_picker
+  - platform: template
+    id: cam_bottom_select
+    name: Bottom Camera
+    icon: mdi:cctv
+    options: ["${cam_1_name}", "${cam_2_name}", "${cam_3_name}", "${cam_4_name}"]
+    initial_option: "${cam_2_name}"
+    optimistic: true
+    restore_value: true
+    on_value:
+      - script.execute: { id: cam_show_loading, slot: 1 }
+      - script.execute: cam_apply_urls
+      - script.execute: cam_sync_picker
+
+globals:
+  - id: cam_keys
+    type: std::array<const char *, 4>
+    initial_value: '{"${cam_1}", "${cam_2}", "${cam_3}", "${cam_4}"}'
+  # -1 = two feeds; 0 / 1 = top / bottom camera fullscreen
+  - id: cam_full_slot
+    type: int
+    initial_value: "-1"
+
+script:
+  - id: cam_apply_urls
+    then:
+      - lambda: |-
+          auto url = [](esphome::select::Select *sel, bool full) {
+            return std::string("${go2rtc}/api/stream.mjpeg?src=esp_") +
+                   id(cam_keys)[sel->active_index().value_or(0)] + (full ? "_full_480" : "_480");
+          };
+          const int fs = id(cam_full_slot);
+          if (fs < 0)
+            id(feed_top).set_url(url(id(cam_top_select), false));
+          else
+            id(feed_top).set_url(url(fs == 0 ? (esphome::select::Select *) id(cam_top_select)
+                                                  : id(cam_bottom_select), true));
+          id(feed_bottom).set_url(url(id(cam_bottom_select), false));
+
+  - id: cam_sync_picker
+    then:
+      - lambda: |-
+          auto sync = [](lv_obj_t *m, esphome::select::Select *sel) {
+            if (m == nullptr || !sel->active_index().has_value())
+              return;
+            for (size_t b = 0; b < 4; b++) {
+              if (b == *sel->active_index())
+                lv_buttonmatrix_set_button_ctrl(m, b, LV_BUTTONMATRIX_CTRL_CHECKED);
+              else
+                lv_buttonmatrix_clear_button_ctrl(m, b, LV_BUTTONMATRIX_CTRL_CHECKED);
+            }
+          };
+          sync(id(cam_top_matrix)->obj, id(cam_top_select));
+          sync(id(cam_bottom_matrix)->obj, id(cam_bottom_select));
+
+  # Black "Loading..." over a slot that is (re)connecting; its stream's on_first_frame hides it.
+  - id: cam_show_loading
+    parameters:
+      slot: int
+    mode: queued
+    then:
+      - lambda: |-
+          auto show = [](lv_obj_t *o) { if (o != nullptr) lv_obj_remove_flag(o, LV_OBJ_FLAG_HIDDEN); };
+          const int fs = id(cam_full_slot);
+          if (fs < 0)
+            show(slot == 0 ? id(cam_top_loading) : id(cam_bottom_loading));
+          else if (fs == slot)
+            show(id(cam_full_overlay));
+
+  - id: cam_start
+    then:
+      - script.execute: { id: cam_show_loading, slot: 0 }
+      - script.execute: { id: cam_show_loading, slot: 1 }
+      - script.execute: cam_apply_urls
+      - lambda: |-
+          id(feed_top).start();
+          if (id(cam_full_slot) < 0)
+            id(feed_bottom).start();
+
+  - id: cam_stop
+    then:
+      - lambda: |-
+          id(feed_top).stop();
+          id(feed_bottom).stop();
+
+  - id: cam_enter_full
+    parameters:
+      slot: int
+    then:
+      - lambda: |-
+          id(cam_full_slot) = slot;
+          id(feed_top).stop();
+          id(feed_bottom).stop();
+          id(feed_top).resize(0, 60, 480, 680);
+      - script.execute: cam_apply_urls
+      - lvgl.widget.hide: [cam_top_panel, cam_bottom_panel]
+      - lvgl.widget.show: cam_full_overlay
+      - lvgl.widget.hide: [titlebar, navbar]
+      - lambda: lv_obj_set_style_bg_color(id(cameras)->obj, lv_color_black(), 0);
+      - lambda: id(feed_top).start();
+
+  # Back to two feeds; with restart false (leaving the page) the streams stay stopped.
+  - id: cam_exit_full
+    parameters:
+      restart: bool
+    then:
+      - lambda: |-
+          id(cam_full_slot) = -1;
+          id(feed_top).stop();
+          id(feed_top).resize(0, 65, 480, 270);
+      - script.execute: cam_apply_urls
+      - lvgl.widget.hide: cam_full_overlay
+      - lvgl.widget.show: [titlebar, navbar]
+      - lambda: lv_obj_set_style_bg_color(id(cameras)->obj, lv_color_hex(0x1C1C1C), 0);
+      - lvgl.widget.show: [cam_top_panel, cam_bottom_panel, cam_top_loading, cam_bottom_loading]
+      - lambda: |-
+          if (restart) {
+            id(feed_top).start();
+            id(feed_bottom).start();
+          }
+
+# Taps on the video are read from the touchscreen directly: an LVGL widget over the video
+# would repaint over the picture when pressed. Only while the Cameras page is showing.
+touchscreen:
+  - id: !extend main_touchscreen
+    on_touch:
+      - lambda: |-
+          if (lv_screen_active() != id(cameras)->obj)
+            return;
+          const int cy = touch.y - 65;  // content-area y (below the header)
+          if (id(cam_full_slot) >= 0) {
+            id(cam_exit_full)->execute(true);  // anywhere: the bars are hidden
+          } else if (cy >= 0 && cy < 270) {
+            id(cam_enter_full)->execute(0);
+          } else if (cy >= 326 && cy < 596) {
+            id(cam_enter_full)->execute(1);
+          }
+
+lvgl:
+  pages:
+    - id: cameras
+      <<: !include ../vars/page.yaml
+      bg_color: 0x1C1C1C
+      pad_left: 0
+      pad_right: 0
+      on_load:
+        - lvgl.label.update:
+            id: page_title
+            text: Cameras
+        - script.execute: { id: tab_select, page: cameras }
+        - script.execute: cam_sync_picker
+        - script.execute: cam_start
+      on_unload:
+        - script.execute: cam_stop
+        - if:
+            condition:
+              lambda: return id(cam_full_slot) >= 0;
+            then:
+              - script.execute: { id: cam_exit_full, restart: false }
+      widgets:
+        - obj:
+            <<: &cam_panel
+              x: 0
+              width: 100%
+              height: 56
+              bg_opa: TRANSP
+              border_width: 0
+              radius: 0
+              pad_top: 4
+              pad_bottom: 4
+              pad_left: 6
+              pad_right: 6
+              scrollable: false
+            id: cam_top_panel
+            y: 270
+            widgets:
+              - buttonmatrix:
+                  <<: &cam_matrix
+                    x: 0
+                    width: 100%
+                    height: 100%
+                    one_checked: true
+                    bg_opa: TRANSP
+                    border_width: 0
+                    pad_all: 0
+                    pad_column: 6
+                    text_font: roboto_sm
+                    items:
+                      bg_color: 0x2A2A2A
+                      text_color: 0xDDDDDD
+                      radius: 10
+                      border_width: 0
+                      shadow_width: 0
+                      checked:
+                        bg_color: 0x1E6FD9
+                        text_color: 0xFFFFFF
+                  id: cam_top_matrix
+                  rows:
+                    - buttons:
+                        - { text: "${cam_1_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_top_select, index: 0 } } }
+                        - { text: "${cam_2_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_top_select, index: 1 } } }
+                        - { text: "${cam_3_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_top_select, index: 2 } } }
+                        - { text: "${cam_4_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_top_select, index: 3 } } }
+        - obj:
+            <<: *cam_panel
+            id: cam_bottom_panel
+            y: 596
+            widgets:
+              - buttonmatrix:
+                  <<: *cam_matrix
+                  id: cam_bottom_matrix
+                  rows:
+                    - buttons:
+                        - { text: "${cam_1_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_bottom_select, index: 0 } } }
+                        - { text: "${cam_2_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_bottom_select, index: 1 } } }
+                        - { text: "${cam_3_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_bottom_select, index: 2 } } }
+                        - { text: "${cam_4_name}", control: { checkable: true }, on_click: { select.set_index: { id: cam_bottom_select, index: 3 } } }
+        - obj: # top feed placeholder (hidden by feed_top's first frame)
+            <<: &cam_loading
+              x: 0
+              width: 100%
+              bg_color: 0x000000
+              border_width: 0
+              radius: 0
+              scrollable: false
+            id: cam_top_loading
+            y: 0
+            height: 270
+            widgets:
+              - label: { align: CENTER, text: Loading..., text_font: roboto_sm, text_color: 0x808080 }
+        - obj: # bottom feed placeholder
+            <<: *cam_loading
+            id: cam_bottom_loading
+            y: 326
+            height: 270
+            widgets:
+              - label: { align: CENTER, text: Loading..., text_font: roboto_sm, text_color: 0x808080 }
+        - obj: # fullscreen placeholder
+            <<: *cam_loading
+            id: cam_full_overlay
+            hidden: true
+            y: -5
+            height: 680
+            widgets:
+              - label:
+                  align: CENTER
+                  text: Loading...
+                  text_font: roboto_sm
+                  text_color: 0x808080
+                  # the fullscreen picture shows turned 90° clockwise; turn the text to match
+                  transform_rotation: 90
+                  transform_pivot_x: 50%
+                  transform_pivot_y: 50%
+
+packages:
+  cameras_access: !include { file: ../home_page.yaml, vars: { page: cameras, label: "Cameras" } }

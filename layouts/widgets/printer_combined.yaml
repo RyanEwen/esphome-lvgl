@@ -1,0 +1,34 @@
+# A 3D printer (Bambu Lab) with a single AMS, the page wide: the name and the AMS's four
+# trays on one line, then status, progress and time left. (printer.yaml: any number of AMS.)
+#
+# vars:
+#   page:        the page it goes on (widgets/page.yaml)
+#   prefix:      the start of the printer's entity ids: sensor.<prefix>_...
+#   text:        its name on screen
+#   integration: bambulab (ha-bambulab, the default) or printstream
+#   uid:         a unique id for its widgets (default: the prefix)
+
+defaults:
+  uid: ${prefix}
+  integration: bambulab
+
+lvgl:
+  pages:
+    - id: !extend ${page}
+      widgets:
+        - obj:
+            id: !extend ${page}_widgets
+            widgets:
+              - obj:
+                  <<: !include ../ui/vars/printer_tile.yaml
+                  layout:
+                    <<: !include ../ui/vars/printer_tile_layout.yaml
+                  widgets: !include
+                    file: parts/printers/tile_combined.yaml
+                    vars:
+                      uid: ${uid}
+                      name: ${text}
+                      <<: [!include ../ui/vars/ams_row.yaml, !include ../ui/vars/printer_bar.yaml]
+
+packages:
+  sensors: !include { file: "parts/printers/${integration}_combined.sensors.yaml", vars: { uid: "${uid}", entity_id_prefix: "${prefix}" } }
