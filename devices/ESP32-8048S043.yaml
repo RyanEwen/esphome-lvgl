@@ -9,7 +9,10 @@ esp32:
     type: esp-idf
     # Required to achieve sufficient PSRAM bandwidth
     sdkconfig_options:
-      COMPILER_OPTIMIZATION_SIZE: y
+      # Build for speed: LVGL rendering is CPU-bound here (measured on the 5": full redraw
+      # 278 -> 240 ms with -O2 and the 32 KB instruction cache).
+      CONFIG_COMPILER_OPTIMIZATION_PERF: y
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: y
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
@@ -37,6 +40,8 @@ light:
     name: Backlight
     platform: monochromatic
     output: gpio_backlight_pwm
+    # linear: with the default 2.8 gamma, 10% came out at ~0.2% power, i.e. black
+    gamma_correct: 1.0
     restore_mode: ALWAYS_ON
 
 display:
@@ -52,7 +57,8 @@ display:
     vsync_pin: 41
     pclk_pin: 42
     pclk_inverted: true
-    pclk_frequency: 14MHz # unsure about this
+    # 14MHz: unlike the 5", this panel shows its colour self-test (no picture) at 12MHz.
+    pclk_frequency: 14MHz
     hsync_front_porch: 8
     hsync_pulse_width: 4
     hsync_back_porch: 8
@@ -71,9 +77,11 @@ touchscreen:
     platform: gt911
     address: 0x5D
     update_interval: 16ms
+    # Raw panel coordinates: LVGL's rotation (below) rotates touch input as well, so
+    # swapping/mirroring here too would rotate it twice.
     transform:
-      swap_xy: true
-      mirror_y: true
+      swap_xy: false
+      mirror_y: false
     # reset_pin: 38
     # on_touch:
     #   - lambda: |-

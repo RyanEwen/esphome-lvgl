@@ -1,0 +1,118 @@
+esp32:
+  board: esp32-p4-evboard
+  cpu_frequency: 400MHz
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    advanced:
+      enable_idf_experimental_features: yes
+    sdkconfig_options:
+      CONFIG_COMPILER_OPTIMIZATION_PERF: y # build for speed rather than size
+
+esp32_hosted:
+  variant: ESP32C6
+  reset_pin: GPIO54
+  cmd_pin: GPIO19
+  clk_pin: GPIO18
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  active_high: true
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+i2c:
+  id: i2c_bus
+  sda: 7
+  scl: 8
+  scan: false
+  frequency: 400kHz
+
+output:
+  - id: gpio_backlight_pwm
+    platform: ledc
+    pin: 23
+
+light:
+  - id: backlight
+    name: Backlight
+    platform: monochromatic
+    output: gpio_backlight_pwm
+    # linear, like the other panels: with the default 2.8 gamma, half brightness was nearly black
+    gamma_correct: 1.0
+    restore_mode: ALWAYS_ON
+
+display:
+  - id: main_display
+    platform: mipi_dsi
+    model: JC4880P443
+    byte_order: little_endian
+
+touchscreen:
+  - id: main_touchscreen
+    platform: gt911
+    i2c_id: i2c_bus
+    reset_pin: GPIO3
+    update_interval: 100ms
+    # on_touch:
+    #   - lambda: |-
+    #         ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+    #           touch.x,
+    #           touch.y,
+    #           touch.x_raw,
+    #           touch.y_raw
+    #         );
+
+preferences:
+  flash_write_interval: 5min
+
+esp_ldo:
+  - channel: 3
+    voltage: 2.5V
+
+audio_dac:
+  - id: main_dac
+    platform: es8311
+    address: 0x18
+    i2c_id: i2c_bus
+
+i2s_audio:
+  - id: i2s_bus
+    i2s_lrclk_pin: GPIO10 # WS / LRCK
+    i2s_bclk_pin: GPIO12 # BCLK
+    i2s_mclk_pin: GPIO13 # ES8311 usually requires a Master Clock
+
+microphone:
+  - id: main_microphone
+    platform: i2s_audio
+    i2s_audio_id: i2s_bus
+    i2s_din_pin: GPIO48 # data In from the Codec
+    adc_type: external
+    pdm: false # ES8311 uses standard I2S, not PDM
+    channel: left
+
+speaker:
+  - id: main_speaker
+    platform: i2s_audio
+    i2s_audio_id: i2s_bus
+    i2s_dout_pin: GPIO9
+    dac_type: external
+    audio_dac: main_dac
+  - id: audio_mixer
+    platform: mixer
+    output_speaker: main_speaker
+    source_speakers:
+      - id: spk_announcement
+      - id: spk_media
+
+media_player:
+  - id: xl_media_player
+    platform: speaker
+    name: "XL Speaker"
+    announcement_pipeline:
+      speaker: spk_announcement
+    media_pipeline:
+      speaker: spk_media

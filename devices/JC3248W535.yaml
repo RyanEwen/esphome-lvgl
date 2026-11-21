@@ -9,7 +9,9 @@ esp32:
   framework:
     type: esp-idf
     sdkconfig_options:
-      COMPILER_OPTIMIZATION_SIZE: y
+      # Build for speed (this was -Os) with the larger instruction cache.
+      CONFIG_COMPILER_OPTIMIZATION_PERF: y
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: y
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: y
       CONFIG_ESP32S3_DATA_CACHE_64KB: y
       CONFIG_ESP32S3_DATA_CACHE_LINE_64B: y
@@ -39,6 +41,8 @@ light:
     name: Backlight
     platform: monochromatic
     output: gpio_backlight_pwm
+    # linear, like the Suntons: with the default 2.8 gamma, half brightness was nearly black
+    gamma_correct: 1.0
     restore_mode: ALWAYS_ON
 
 display:
