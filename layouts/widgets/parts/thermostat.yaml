@@ -15,3 +15,4 @@
     file: base/stepper.yaml
     vars:
       icon: "\U000F0393" # thermostat; thermostat.sensors.yaml swaps it while running
+      detail: "--°" # the room temperature, once Home Assistant sends it

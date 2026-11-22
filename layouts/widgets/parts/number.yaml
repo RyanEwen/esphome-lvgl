@@ -11,4 +11,4 @@
 # - value_width
 
 # obj:
-  <<: !include base/stepper.yaml
+  <<: !include { file: base/stepper.yaml, vars: { detail: "" } } # no line under the name

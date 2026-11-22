@@ -1,6 +1,9 @@
 # A tile that runs a Home Assistant script (or anything script.turn_on starts): an icon
 # and a name. No state to show, so there's no sensors file.
 #
+# The icon and name sit side by side, centred top to bottom, so the tile reads at any
+# height -- a short full-width bar as well as a regular tile. A long name ends in "...".
+#
 # On a page, use layouts/widgets/script.yaml.
 #
 # required vars:
@@ -12,14 +15,25 @@
 # - icon      # an MDI glyph in layouts/fonts/glyphs.yaml
 
 # button:
-  <<: !include
-    file: base/icon_text_stateless.yaml
-    vars:
-      uid: ${uid}
-      width: ${width}
-      height: ${height}
-      icon: ${icon}
-      text: ${text}
+  id: ${uid}_widget
+  width: ${width}
+  height: ${height}
+  layout:
+    type: FLEX
+    flex_flow: ROW
+    flex_align_cross: CENTER
+    flex_align_track: CENTER
+    pad_column: 10
+  widgets:
+    - label:
+        id: ${uid}_widget_icon
+        text: ${icon}
+        text_font: mdi_md
+    - label:
+        id: ${uid}_widget_text
+        text: ${text}
+        flex_grow: 1
+        long_mode: DOT
   on_short_click:
     - homeassistant.action:
         action: script.turn_on

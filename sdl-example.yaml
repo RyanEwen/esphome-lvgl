@@ -61,6 +61,9 @@ esphome:
             id(bedroom_tv_title).publish_state("Nature Documentary");
             id(bedroom_tv_state).publish_state("playing");
             id(living_room_tv_state).publish_state("off");
+            id(living_room_widget_sensor).publish_state(21);  // the thermostat: target 21, room 20, heating
+            id(living_room_current).publish_state(20);
+            id(living_room_action).publish_state("heating");
             id(wx_temperature).publish_state(18);
             id(wx_condition).publish_state("partlycloudy");
             // two printers: one printing, one done, with their AMS trays

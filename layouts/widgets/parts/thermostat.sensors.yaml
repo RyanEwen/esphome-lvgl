@@ -47,7 +47,7 @@ sensor:
           id: ${uid}_widget_detail
           text: !lambda |-
             if (std::isnan(x))
-              return std::string("");
+              return std::string("--°");
             char buf[16];
             snprintf(buf, sizeof(buf), "%.0f°", x);
             return std::string(buf);

@@ -15,6 +15,7 @@
 # - icon
 # - button_width
 # - value_width
+# - detail       # the line under the name until a value comes in ("" hides it)
 
 # obj:
   id: ${uid}_widget
@@ -60,9 +61,11 @@
               width: 100%
               long_mode: DOT
               height: "${(tile_font_size * 6) // 5}" # one line, so a long name ends in "..."
+          # hidden when empty, so a lone name sits centred beside the icon
           - label:
               id: ${uid}_widget_detail
-              text: ""
+              text: "${detail}"
+              hidden: ${detail == ""}
               text_font: roboto_sm
               text_opa: 65%
     - obj:

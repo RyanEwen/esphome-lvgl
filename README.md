@@ -6,13 +6,17 @@ Wall and bedside touch panels on cheap ESP32 displays, in plain ESPHome YAML: li
 room, weather, your calendars, cameras, and a photo screensaver, all talking straight to
 Home Assistant. No browser, no dashboard server.
 
-| Screensaver | Rooms | A room | Brightness |
-| --- | --- | --- | --- |
-| ![Screensaver](media/screenshots/screensaver.png) | ![Rooms](media/screenshots/rooms.png) | ![Bedroom](media/screenshots/room_bedroom.png) | ![Brightness pop-up](media/screenshots/brightness_popup.png) |
+| Screensaver | Rooms | A room |
+| --- | --- | --- |
+| ![Screensaver](media/screenshots/screensaver.png) | ![Rooms](media/screenshots/rooms.png) | ![Bedroom](media/screenshots/room_bedroom.png) |
 
-| Printers | Weather | Agenda | Settings |
-| --- | --- | --- | --- |
-| ![Office with 3D printers](media/screenshots/room_office.png) | ![Weather](media/screenshots/weather.png) | ![Agenda](media/screenshots/agenda.png) | ![Settings](media/screenshots/settings.png) |
+| Thermostat and TV | Brightness | Printers |
+| --- | --- | --- |
+| ![Living Room with a thermostat and TV](media/screenshots/room_living_room.png) | ![Brightness pop-up](media/screenshots/brightness_popup.png) | ![Office with 3D printers](media/screenshots/room_office.png) |
+
+| Weather | Agenda | Settings |
+| --- | --- | --- |
+| ![Weather](media/screenshots/weather.png) | ![Agenda](media/screenshots/agenda.png) | ![Settings](media/screenshots/settings.png) |
 
 *The demo house, rendered with `tools/snapshot.py`.*
 
