@@ -44,6 +44,7 @@ light:
     name: Display Backlight
     restore_mode: ALWAYS_ON
   - id: led
+    name: back_led
     platform: rgb
     red: output_red
     green: output_green
