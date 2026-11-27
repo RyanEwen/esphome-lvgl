@@ -291,16 +291,20 @@ void MjpegStream::loop() {
     // Push in strips through a small internal DMA buffer. Handing the SPI driver the whole
     // PSRAM framebuffer makes it allocate a same-sized internal bounce buffer per transfer,
     // which fails (ESP_ERR_NO_MEM) once LVGL is also using internal RAM.
+    // Always the draw_pixels_at() form without a ColorOrder: since 2026.11 that one goes through
+    // the base Display per pixel (draw_pixel_at), which applies the display's rotation and makes
+    // mipi_rgb allocate a second 768 KB framebuffer (frames came out sideways, then the panel
+    // ran out of PSRAM).
     if (this->push_rows_ == 0) {
       // Displays that copy into their own framebuffer (e.g. MIPI-DSI) take the frame in one call.
       this->display_->draw_pixels_at(this->x_, this->y_, this->w_, this->h_, (const uint8_t *) this->show_fb_,
-                                     display::COLOR_ORDER_RGB, display::COLOR_BITNESS_565, this->big_endian_, 0, 0, 0);
+                                     display::COLOR_BITNESS_565, this->big_endian_, 0, 0, 0);
     } else {
       for (int row = 0; row < this->h_; row += this->push_rows_) {
         const int n = std::min(this->push_rows_, this->h_ - row);
         memcpy(this->dma_buf_, this->show_fb_ + (size_t) row * this->w_, (size_t) n * this->w_ * sizeof(uint16_t));
         this->display_->draw_pixels_at(this->x_, this->y_ + row, this->w_, n, (const uint8_t *) this->dma_buf_,
-                                       display::COLOR_ORDER_RGB, display::COLOR_BITNESS_565, this->big_endian_, 0, 0,
+                                       display::COLOR_BITNESS_565, this->big_endian_, 0, 0,
                                        0);
       }
     }

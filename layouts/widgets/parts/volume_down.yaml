@@ -1,10 +1,12 @@
-# Volume down for a media player; holding it keeps stepping. No state, so no sensors file.
+# Volume down; holding it keeps stepping. No state, so no sensors file.
 #
 # required vars:
 # - uid
 # - width
 # - height
 # - entity_id
+# - action:    the Home Assistant action to call on entity_id, e.g. media_player.volume_down
+#              or script.turn_on (entity_id then being the script)
 
 # button:
   <<: !include
@@ -16,11 +18,11 @@
       icon: "\U000F075E"
   on_short_click:
     - homeassistant.action:
-        action: media_player.volume_down
+        action: ${action}
         data:
           entity_id: ${entity_id}
   on_long_press_repeat:
     - homeassistant.action:
-        action: media_player.volume_down
+        action: ${action}
         data:
           entity_id: ${entity_id}

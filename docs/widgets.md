@@ -57,7 +57,7 @@ lights that are on (which is also what auto-dim reads).
 | Widget | What it does | Extra vars |
 | --- | --- | --- |
 | `tv.yaml` | A full-width card: the TV's state and what's playing, then power, previous, play/pause and next. | `text` defaults to TV |
-| `volume.yaml` | Volume down and up, side by side; holding one keeps stepping. No `text`. | `height` (default a little under the tile height) |
+| `volume.yaml` | Volume down and up, side by side; holding one keeps stepping. No `text`. For a device with no media_player (an IR soundbar), give `down_script` and `up_script` plus a `uid` instead of `entity_id`. | `height` (default a little under the tile height), `down_script`, `up_script` |
 | `media.yaml` | A plain widget that toggles a media player's power; on while it's playing, paused or idle. | `icon_on`, `icon_off` |
 
 ```yaml

@@ -29,9 +29,6 @@ esp32:
       # arrived in a fast-forward burst. Same setting as the 3.5" camera viewers.
       CONFIG_LWIP_TCP_WND_DEFAULT: "32768"
       CONFIG_LWIP_TCP_RECVMBOX_SIZE: "32"
-    components:
-      - name: "bitbank2/jpegdec"
-        source: https://github.com/strange-v/jpegdec-esphome
 
 external_components:
   - source:

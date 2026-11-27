@@ -6,14 +6,13 @@ Content-Length header per part). Frames are received on core 0, decoded with JPE
 with LVGL drawing other parts of the screen. Only the newest frame is ever kept, so
 latency cannot accumulate when the device falls behind.
 
-Requires the `bitbank2/jpegdec` IDF component (strange-v/jpegdec-esphome) to be listed
-under esp32.framework.components in the device YAML.
+Uses the JPEGDEC build ESPHome's runtime_image adds (esphome-libs), so the two never disagree.
 """
 
 from esphome import automation
 import esphome.codegen as cg
 from esphome.components import display
-from esphome.components.esp32 import include_builtin_idf_component
+from esphome.components.esp32 import add_idf_component, include_builtin_idf_component
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_DISPLAY_ID,
@@ -74,8 +73,35 @@ CONFIG_SCHEMA = cv.Schema(
 ).extend(cv.COMPONENT_SCHEMA)
 
 
+def _final_validate(config):
+    # Frames are drawn in the panel's native coordinates. Since 2026.11, LVGL hands its rotation
+    # to drivers that can rotate (mipi_rgb: the Sunton RGB boards), and the driver would then
+    # turn these frames too. Marking the display as not rotating keeps LVGL on software
+    # rotation, as before 2026.11, so the driver stays at 0.
+    from dataclasses import replace
+
+    from esphome.components.display import _get_metadata_list
+
+    entries = _get_metadata_list()
+    disp_id = config[CONF_DISPLAY_ID]
+    for i, (id_, meta) in enumerate(entries):
+        if id_.id == disp_id.id and meta.has_hardware_rotation:
+            entries[i] = (id_, replace(meta, has_hardware_rotation=False))
+    return config
+
+
+FINAL_VALIDATE_SCHEMA = _final_validate
+
+
 async def to_code(config):
     include_builtin_idf_component("esp_http_client")
+    # Same library, version and esp-dsp as esphome/components/runtime_image (JPEG format).
+    cg.add_library(
+        "JPEGDEC",
+        "1.8.4",
+        "https://github.com/esphome-libs/JPEGDEC#1.8.4-esphome.4",
+    )
+    add_idf_component(name="espressif/esp-dsp", ref="1.8.2")
 
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
