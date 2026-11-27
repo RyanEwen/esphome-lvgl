@@ -63,6 +63,8 @@ lights that are on (which is also what auto-dim reads).
 ```yaml
   - !include { file: ../../layouts/widgets/tv.yaml, vars: { page: room_bedroom, entity_id: media_player.bedroom_tv } }
   - !include { file: ../../layouts/widgets/volume.yaml, vars: { page: room_bedroom, entity_id: media_player.bedroom_tv } }
+  # a soundbar with no media_player: volume through two scripts (e.g. IR codes)
+  - !include { file: ../../layouts/widgets/volume.yaml, vars: { page: room_living_room, uid: living_room_soundbar, down_script: script.living_room_volume_down, up_script: script.living_room_volume_up } }
 ```
 
 ## Scripts, switches and covers
